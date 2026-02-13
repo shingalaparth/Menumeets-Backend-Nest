@@ -22,6 +22,16 @@ import {
     cashfreeConfig,
 } from './config';
 
+// Infrastructure
+import { PrismaModule } from './infrastructure/database/prisma.module';
+import { RedisModule } from './infrastructure/cache/redis.module';
+import { ExternalModule } from './infrastructure/external/external.module';
+
+// Domain Modules (Phase 4)
+import { UserModule } from './modules/user/user.module';
+import { VendorModule } from './modules/vendor/vendor.module';
+import { AuthModule } from './modules/auth/auth.module';
+
 @Module({
     imports: [
         // ── Global Config (replaces old config/env.js) ──
@@ -39,18 +49,14 @@ import {
         }),
 
         // ── Infrastructure (Phase 2) ──
-        // PrismaModule,
-        // RedisModule,
-        // BullMQModule,
-        // ExternalModule,
+        PrismaModule,
+        RedisModule,
+        ExternalModule,
 
-        // ── Domain Modules (Phase 4+) ──
-        // UserModule,
-        // AuthModule,
-        // VendorModule,
-        // ShopModule,
-        // MenuModule,
-        // ... etc
+        // ── Domain Modules (Phase 4) ──
+        UserModule,
+        VendorModule,
+        AuthModule,
     ],
     controllers: [],
     providers: [],

@@ -13,6 +13,8 @@ import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
+import { TransformInterceptor } from './shared/interceptors/transform.interceptor';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -24,6 +26,10 @@ async function bootstrap() {
 
     // ── Global Prefix ──
     app.setGlobalPrefix('api');
+
+    // ── Global Pipes, Filters, Interceptors (Phase 3) ──
+    app.useGlobalFilters(new HttpExceptionFilter());
+    app.useGlobalInterceptors(new TransformInterceptor());
 
     // ── CORS (migrated from old app.js) ──
     const allowedOrigins = [

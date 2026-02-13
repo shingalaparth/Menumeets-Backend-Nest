@@ -10,6 +10,12 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const config_2 = require("./config");
+const prisma_module_1 = require("./infrastructure/database/prisma.module");
+const redis_module_1 = require("./infrastructure/cache/redis.module");
+const external_module_1 = require("./infrastructure/external/external.module");
+const user_module_1 = require("./modules/user/user.module");
+const vendor_module_1 = require("./modules/vendor/vendor.module");
+const auth_module_1 = require("./modules/auth/auth.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -28,6 +34,12 @@ exports.AppModule = AppModule = __decorate([
                     config_2.cashfreeConfig,
                 ],
             }),
+            prisma_module_1.PrismaModule,
+            redis_module_1.RedisModule,
+            external_module_1.ExternalModule,
+            user_module_1.UserModule,
+            vendor_module_1.VendorModule,
+            auth_module_1.AuthModule,
         ],
         controllers: [],
         providers: [],

@@ -1,0 +1,93 @@
+// Prisma Schema — Menumeets Backend
+// Models are added as modules are migrated.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────
+// User (from modules/user/models/user.model.js)
+// ──────────────────────────────────────
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String   @unique
+  email     String?
+  role      String   @default("customer")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+// ──────────────────────────────────────
+// Vendor (from modules/vendor/models/vendor.model.js)
+// ──────────────────────────────────────
+model Vendor {
+  id       String @id @default(uuid())
+  name     String
+  email    String @unique
+  phone    String @unique @map("number")
+  password String
+  role     String @default("vendor") // vendor, admin, manager, cashier, franchise_owner, food_court_owner
+
+  // Relationships
+  parentVendorId   String?  @map("parent_vendor_id")
+  parentVendor     Vendor?  @relation("VendorStaff", fields: [parentVendorId], references: [id])
+  staffMembers     Vendor[] @relation("VendorStaff")
+  managesFoodCourt String?  @map("manages_food_court") // FoodCourt ID (FK added when FoodCourt model is migrated)
+  managesShop      String?  @map("manages_shop")       // Shop ID (FK added when Shop model is migrated)
+
+  // Personal Info (JSON — same as old nested subdoc)
+  personalInfo Json? @map("personal_info")
+
+  // KYC (JSON — aadhaarNumber, panNumber, images, status, rejectionReason)
+  kyc Json?
+
+  // Bank Details (JSON — accountHolderName, accountNumber, ifscCode, etc.)
+  bankDetails Json? @map("bank_details")
+
+  // Franchise Roles (JSON array — franchise, role, regions, assignedShops, permissions)
+  franchiseRoles Json? @map("franchise_roles")
+
+  // Notification Preferences
+  notificationPreferences Json? @default("{}") @map("notification_preferences")
+
+  // Security
+  security Json? @default("{}") @map("security_settings")
+
+  // Permissions
+  permissions Json? @default("{}") @map("vendor_permissions")
+
+  // Activity Logs
+  activityLogs VendorActivityLog[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("vendors")
+}
+
+// ──────────────────────────────────────
+// Vendor Activity Log (from models/vendorActivityLog.model.js)
+// ──────────────────────────────────────
+model VendorActivityLog {
+  id        String   @id @default(uuid())
+  vendorId  String   @map("vendor_id")
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  action    String   // LOGIN, UPDATE_PROFILE, DELETE_ITEM, etc.
+  details   String?
+  metadata  Json?
+  ip        String?
+  device    String?
+  browser   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([vendorId])
+  @@map("vendor_activity_logs")
+}

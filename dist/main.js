@@ -4,6 +4,8 @@ const core_1 = require("@nestjs/core");
 const config_1 = require("@nestjs/config");
 const cookieParser = require("cookie-parser");
 const app_module_1 = require("./app.module");
+const http_exception_filter_1 = require("./shared/filters/http-exception.filter");
+const transform_interceptor_1 = require("./shared/interceptors/transform.interceptor");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const configService = app.get(config_1.ConfigService);
@@ -11,6 +13,8 @@ async function bootstrap() {
     const frontendUrl = configService.get('app.frontendUrl', 'http://localhost:5173');
     const env = configService.get('app.env', 'development');
     app.setGlobalPrefix('api');
+    app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
+    app.useGlobalInterceptors(new transform_interceptor_1.TransformInterceptor());
     const allowedOrigins = [
         'http://localhost:5173',
         'http://localhost:3000',
