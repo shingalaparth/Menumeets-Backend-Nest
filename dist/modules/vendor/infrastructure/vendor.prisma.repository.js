@@ -28,6 +28,11 @@ let VendorPrismaRepository = class VendorPrismaRepository {
             where: { OR: [{ email }, { phone }] },
         });
     }
+    async findStaffByOwner(ownerId) {
+        return this.prisma.vendor.findMany({
+            where: { parentVendorId: ownerId },
+        });
+    }
     async findAll() {
         return this.prisma.vendor.findMany({
             select: {

@@ -16,6 +16,24 @@ const external_module_1 = require("./infrastructure/external/external.module");
 const user_module_1 = require("./modules/user/user.module");
 const vendor_module_1 = require("./modules/vendor/vendor.module");
 const auth_module_1 = require("./modules/auth/auth.module");
+const shop_module_1 = require("./modules/shop/shop.module");
+const menu_module_1 = require("./modules/menu/menu.module");
+const table_module_1 = require("./modules/table/table.module");
+const cart_module_1 = require("./modules/cart/cart.module");
+const order_module_1 = require("./modules/order/order.module");
+const payment_module_1 = require("./modules/payment/payment.module");
+const staff_module_1 = require("./modules/staff/staff.module");
+const kot_module_1 = require("./modules/kot/kot.module");
+const invoice_module_1 = require("./modules/invoice/invoice.module");
+const captain_module_1 = require("./modules/captain/captain.module");
+const franchise_module_1 = require("./modules/franchise/franchise.module");
+const food_court_module_1 = require("./modules/food-court/food-court.module");
+const notification_module_1 = require("./modules/notification/notification.module");
+const review_module_1 = require("./modules/review/review.module");
+const inventory_module_1 = require("./modules/inventory/inventory.module");
+const admin_module_1 = require("./modules/admin/admin.module");
+const analytics_module_1 = require("./modules/analytics/analytics.module");
+const system_module_1 = require("./modules/system/system.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -40,6 +58,24 @@ exports.AppModule = AppModule = __decorate([
             user_module_1.UserModule,
             vendor_module_1.VendorModule,
             auth_module_1.AuthModule,
+            shop_module_1.ShopModule,
+            menu_module_1.MenuModule,
+            table_module_1.TableModule,
+            cart_module_1.CartModule,
+            order_module_1.OrderModule,
+            payment_module_1.PaymentModule,
+            staff_module_1.StaffModule,
+            kot_module_1.KOTModule,
+            invoice_module_1.InvoiceModule,
+            captain_module_1.CaptainModule,
+            franchise_module_1.FranchiseModule,
+            food_court_module_1.FoodCourtModule,
+            notification_module_1.NotificationModule,
+            review_module_1.ReviewModule,
+            inventory_module_1.InventoryModule,
+            admin_module_1.AdminModule,
+            analytics_module_1.AnalyticsModule,
+            system_module_1.SystemModule,
         ],
         controllers: [],
         providers: [],

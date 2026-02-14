@@ -1,0 +1,76 @@
+import { KOTService } from '../application/kot.service';
+export declare class KOTController {
+    private readonly kotService;
+    constructor(kotService: KOTService);
+    login(body: any): Promise<{
+        success: boolean;
+        token: string;
+        shop: {
+            id: string;
+            name: string;
+            features: any;
+        };
+    }>;
+    getKOTOrders(shop: any): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        shopId: string | null;
+        foodCourtId: string | null;
+        tableId: string | null;
+        userId: string | null;
+        shortOrderId: string;
+        tableSessionId: string | null;
+        parentOrderId: string | null;
+        orderType: string;
+        orderStatus: string;
+        subtotal: number;
+        totalAmount: number;
+        taxDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        paymentMethod: string;
+        paymentStatus: string;
+        paymentDeadline: Date | null;
+        razorpayOrderId: string | null;
+        razorpayPaymentId: string | null;
+        razorpaySignature: string | null;
+        cashfreeOrderId: string | null;
+        cashfreePaymentId: string | null;
+        isPOS: boolean;
+        customerDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        seatInfo: import("@prisma/client/runtime/library").JsonValue | null;
+        notes: string | null;
+        inventoryDeducted: boolean;
+        completedAt: Date | null;
+    }[]>;
+    updateOrderStatus(shop: any, orderId: string, body: any): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        shopId: string | null;
+        foodCourtId: string | null;
+        tableId: string | null;
+        userId: string | null;
+        shortOrderId: string;
+        tableSessionId: string | null;
+        parentOrderId: string | null;
+        orderType: string;
+        orderStatus: string;
+        subtotal: number;
+        totalAmount: number;
+        taxDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        paymentMethod: string;
+        paymentStatus: string;
+        paymentDeadline: Date | null;
+        razorpayOrderId: string | null;
+        razorpayPaymentId: string | null;
+        razorpaySignature: string | null;
+        cashfreeOrderId: string | null;
+        cashfreePaymentId: string | null;
+        isPOS: boolean;
+        customerDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        seatInfo: import("@prisma/client/runtime/library").JsonValue | null;
+        notes: string | null;
+        inventoryDeducted: boolean;
+        completedAt: Date | null;
+    }>;
+}

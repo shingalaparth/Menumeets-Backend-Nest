@@ -25,4 +25,5 @@ export declare class CashfreeService {
     constructor(configService: ConfigService);
     createPaymentOrder(payload: CashfreeOrderPayload): Promise<CashfreeOrderResponse>;
     getPaymentStatus(cfOrderId: string): Promise<Record<string, unknown>>;
+    createVendor(vendorData: any): Promise<any>;
 }

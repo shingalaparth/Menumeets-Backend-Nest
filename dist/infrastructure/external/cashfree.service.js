@@ -66,6 +66,16 @@ let CashfreeService = class CashfreeService {
         });
         return response.data;
     }
+    async createVendor(vendorData) {
+        const response = await axios_1.default.post(`${this.baseUrl}/easy-split/vendors`, vendorData, {
+            headers: {
+                'x-client-id': this.appId,
+                'x-client-secret': this.secretKey,
+                'x-api-version': '2023-08-01',
+            },
+        });
+        return response.data;
+    }
 };
 exports.CashfreeService = CashfreeService;
 exports.CashfreeService = CashfreeService = __decorate([

@@ -1,0 +1,12 @@
+import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { InvoiceRepository } from '../domain/invoice.repository';
+import { Invoice } from '@prisma/client';
+export declare class InvoicePrismaRepository implements InvoiceRepository {
+    private prisma;
+    constructor(prisma: PrismaService);
+    create(data: any): Promise<Invoice>;
+    findById(id: string): Promise<Invoice | null>;
+    findByOrderId(orderId: string): Promise<Invoice | null>;
+    findByInvoiceNumber(invoiceNumber: string): Promise<Invoice | null>;
+    count(): Promise<number>;
+}

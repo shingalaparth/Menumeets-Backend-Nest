@@ -25,7 +25,7 @@ exports.VendorModule = VendorModule = __decorate([
                 useClass: vendor_prisma_repository_1.VendorPrismaRepository,
             },
         ],
-        exports: [vendor_service_1.VendorService],
+        exports: [vendor_service_1.VendorService, vendor_repository_1.VENDOR_REPOSITORY],
     })
 ], VendorModule);
 //# sourceMappingURL=vendor.module.js.map

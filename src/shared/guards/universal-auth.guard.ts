@@ -27,22 +27,33 @@ export class UniversalAuthGuard implements CanActivate {
             const decoded = verifyJWT(token, secret);
 
             // Try User first
-            const user = await this.prisma.user.findUnique({
-                where: { id: decoded.id },
-            });
+            if (decoded.sub || decoded.id) {
+                const user = await this.prisma.user.findUnique({
+                    where: { id: (decoded.sub || decoded.id) as string },
+                });
 
-            if (user) {
-                request.user = user;
-                return true;
+                if (user) {
+                    request.user = user;
+                    return true;
+                }
             }
 
-            // Then try Vendor (will be enabled when Vendor model is added to Prisma)
-            // const vendor = await this.prisma.vendor.findUnique({ where: { id: decoded.id } });
-            // if (vendor) { request.vendor = vendor; return true; }
+            // Then try Vendor
+            // Prisma expects specific type for where, let's use explicit ID if available
+            if (decoded.sub || decoded.id) {
+                const vendor = await this.prisma.vendor.findUnique({
+                    where: { id: (decoded.sub || decoded.id) as string }
+                });
 
-            // Fallback: attach decoded token
-            request.user = decoded;
-            return true;
+                if (vendor) {
+                    request.vendor = vendor;
+                    return true;
+                }
+            }
+
+            // Fallback: attach decoded token if no db match found (or throw error?)
+            // For now, fail if not found in DB to ensure valid identity
+            throw new UnauthorizedException('User or Vendor not found');
         } catch {
             throw new UnauthorizedException('Not authorized, invalid token');
         }

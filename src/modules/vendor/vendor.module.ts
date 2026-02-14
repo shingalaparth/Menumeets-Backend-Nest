@@ -13,6 +13,6 @@ import { VendorPrismaRepository } from './infrastructure/vendor.prisma.repositor
             useClass: VendorPrismaRepository,
         },
     ],
-    exports: [VendorService], // Auth module needs VendorService
+    exports: [VendorService, VENDOR_REPOSITORY], // Auth and Staff modules need access
 })
 export class VendorModule { }

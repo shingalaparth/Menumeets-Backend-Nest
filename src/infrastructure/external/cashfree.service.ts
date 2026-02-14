@@ -101,4 +101,18 @@ export class CashfreeService {
 
         return response.data;
     }
+
+    /**
+     * Create/Onboard a Vendor in Cashfree
+     */
+    async createVendor(vendorData: any): Promise<any> {
+        const response = await axios.post(`${this.baseUrl}/easy-split/vendors`, vendorData, {
+            headers: {
+                'x-client-id': this.appId,
+                'x-client-secret': this.secretKey,
+                'x-api-version': '2023-08-01',
+            },
+        });
+        return response.data;
+    }
 }

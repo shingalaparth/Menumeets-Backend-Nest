@@ -26,6 +26,12 @@ export class VendorPrismaRepository implements VendorRepository {
         }) as Promise<VendorEntity | null>;
     }
 
+    async findStaffByOwner(ownerId: string): Promise<VendorEntity[]> {
+        return this.prisma.vendor.findMany({
+            where: { parentVendorId: ownerId },
+        }) as unknown as Promise<VendorEntity[]>;
+    }
+
     async findAll(): Promise<Partial<VendorEntity>[]> {
         return this.prisma.vendor.findMany({
             select: {

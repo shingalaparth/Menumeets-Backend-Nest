@@ -28,15 +28,25 @@ let UniversalAuthGuard = class UniversalAuthGuard {
         try {
             const secret = this.configService.get('jwt.secret', '');
             const decoded = (0, jwt_util_1.verifyJWT)(token, secret);
-            const user = await this.prisma.user.findUnique({
-                where: { id: decoded.id },
-            });
-            if (user) {
-                request.user = user;
-                return true;
+            if (decoded.sub || decoded.id) {
+                const user = await this.prisma.user.findUnique({
+                    where: { id: (decoded.sub || decoded.id) },
+                });
+                if (user) {
+                    request.user = user;
+                    return true;
+                }
             }
-            request.user = decoded;
-            return true;
+            if (decoded.sub || decoded.id) {
+                const vendor = await this.prisma.vendor.findUnique({
+                    where: { id: (decoded.sub || decoded.id) }
+                });
+                if (vendor) {
+                    request.vendor = vendor;
+                    return true;
+                }
+            }
+            throw new common_1.UnauthorizedException('User or Vendor not found');
         }
         catch {
             throw new common_1.UnauthorizedException('Not authorized, invalid token');

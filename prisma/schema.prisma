@@ -22,6 +22,12 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  carts        Cart?
+  orders       Order[]
+  invoices     Invoice[]
+  notifications Notification[]
+  reviews       Review[]
+
   @@map("users")
 }
 
@@ -41,7 +47,12 @@ model Vendor {
   parentVendor     Vendor?  @relation("VendorStaff", fields: [parentVendorId], references: [id])
   staffMembers     Vendor[] @relation("VendorStaff")
   managesFoodCourt String?  @map("manages_food_court") // FoodCourt ID (FK added when FoodCourt model is migrated)
+  managedFoodCourt FoodCourt? @relation("FoodCourtManager")
+
   managesShop      String?  @map("manages_shop")       // Shop ID (FK added when Shop model is migrated)
+
+  // Franchise
+  ownedFranchise   Franchise? // One vendor can own one franchise brand (for now)
 
   // Personal Info (JSON — same as old nested subdoc)
   personalInfo Json? @map("personal_info")
@@ -66,6 +77,9 @@ model Vendor {
 
   // Activity Logs
   activityLogs VendorActivityLog[]
+  shops        Shop[]
+  notifications Notification[]
+  stockHistory  StockHistory[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -90,4 +104,746 @@ model VendorActivityLog {
 
   @@index([vendorId])
   @@map("vendor_activity_logs")
+}
+
+// ──────────────────────────────────────
+// Shop (from modules/shop/models/shop.model.js)
+// ──────────────────────────────────────
+model Shop {
+  id           String  @id @default(uuid())
+  name         String
+  address      String  @default("")
+  phone        String  @default("")
+  businessType String  @default("Restaurant") @map("business_type") // Restaurant, Cinema
+  isActive     Boolean @default(true) @map("is_active")
+  status       String  @default("Approved") // Pending, Approved, Rejected
+
+  // Owner
+  ownerId String @map("owner_id")
+  owner   Vendor @relation(fields: [ownerId], references: [id])
+
+  // Optional FK references
+  franchiseId String?    @map("franchise_id")
+  franchise   Franchise? @relation(fields: [franchiseId], references: [id])
+  
+  foodCourtId String?    @map("food_court_id")
+  foodCourt   FoodCourt? @relation(fields: [foodCourtId], references: [id])
+  
+  region      String?
+
+  // Auth Pins
+  captainPin String? @map("captain_pin")
+  kotPin     String? @map("kot_pin")
+
+  // UPI
+  upiQrCodeUrl String? @map("upi_qr_code_url")
+
+  // Payment Onboarding (Cashfree — replaces old Razorpay)
+  cashfreeVendorId         String? @map("cashfree_vendor_id")
+  cashfreeOnboardingStatus String  @default("not_linked") @map("cashfree_onboarding_status") // active, pending, not_linked, linked
+
+  // Complex settings stored as JSON (matches old Mongoose nested objects)
+  settings         Json? @default("{}") // profile, tax, featureAccess, featureEntitlements, quickAccess, orientationMode
+  franchisePolicy  Json? @default("{}") @map("franchise_policy")  // enforceMenuTemplate, allowLocalPricing
+  soundPreferences Json? @default("{}") @map("sound_preferences") // playInDashboard, playInKOT, volume
+  franchiseMenuDistribution Json? @default("{}") @map("franchise_menu_distribution") // { enabledCategories: [], enabledItems: [] }
+
+
+  // Relations
+  categories    Category[]
+  menuItems     MenuItem[]
+  tables        Table[]
+  tableSessions TableSession[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  carts         Cart[]
+  cartItems     CartItem[]
+  orders        Order[]
+  reviews       Review[]
+  
+  // Inventory
+  ingredients   Ingredient[]
+  recipes       Recipe[]
+  stockHistory  StockHistory[]
+  suppliers     Supplier[]
+  purchaseOrders PurchaseOrder[]
+  broadcasts     AdminBroadcast[] // Admin messages
+  shopRequests   ShopRequest[]
+
+  @@index([ownerId])
+  @@index([foodCourtId])
+  @@map("shops")
+}
+
+// ──────────────────────────────────────
+// Category (from modules/menu/models/category.model.js)
+// ──────────────────────────────────────
+model Category {
+  id          String  @id @default(uuid())
+  name        String
+  nameHi      String  @default("") @map("name_hi")
+  nameGu      String  @default("") @map("name_gu")
+  description String  @default("")
+  descriptionHi String @default("") @map("description_hi")
+  descriptionGu String @default("") @map("description_gu")
+
+  shopId String @map("shop_id")
+  shop   Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  sourceGlobalCategoryId String? @map("source_global_category_id")
+
+  isActive   Boolean   @default(true) @map("is_active")
+  sortOrder  Int       @default(0) @map("sort_order")
+  isArchived Boolean   @default(false) @map("is_archived")
+  archivedAt DateTime? @map("archived_at")
+
+  menuItems MenuItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([shopId, name])
+  @@index([shopId])
+  @@map("categories")
+}
+
+// ──────────────────────────────────────
+// MenuItem (from modules/menu/models/menuItem.model.js)
+// ──────────────────────────────────────
+model MenuItem {
+  id          String  @id @default(uuid())
+  name        String
+  nameHi      String  @default("") @map("name_hi")
+  nameGu      String  @default("") @map("name_gu")
+  description String  @default("")
+  descriptionHi String @default("") @map("description_hi")
+  descriptionGu String @default("") @map("description_gu")
+
+  price Float?  // Base price (optional if variants exist)
+
+  shopId String @map("shop_id")
+  shop   Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  categoryId String   @map("category_id")
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  sourceGlobalItemId String? @map("source_global_item_id")
+
+  // Complex sub-objects as JSON
+  image       Json?  // { url, publicId }
+  variants    Json?  @default("[]") // [{ name, nameHi, nameGu, price, isAvailable }]
+  addOnGroups Json?  @default("[]") @map("add_on_groups") // [{ groupName, selectionType, addOns: [{ name, price }] }]
+
+  isAvailable    Boolean @default(true) @map("is_available")
+  isVegetarian   Boolean @default(false) @map("is_vegetarian")
+  isVegan        Boolean @default(false) @map("is_vegan")
+  isFavorite     Boolean @default(false) @map("is_favorite")
+  preparationTime Int    @default(15) @map("preparation_time")
+  spiceLevel     String  @default("none") @map("spice_level")
+  tags           Json?   @default("[]")
+
+  sortOrder  Int       @default(0) @map("sort_order")
+  isArchived Boolean   @default(false) @map("is_archived")
+  archivedAt DateTime? @map("archived_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  cartItems    CartItem[]
+  orderItems   OrderItem[]
+  recipes      Recipe[]
+
+  @@index([shopId])
+  @@index([categoryId])
+  @@map("menu_items")
+}
+
+// ──────────────────────────────────────
+// Global Menu (Templates for cloning)
+// ──────────────────────────────────────
+model GlobalCategory {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  nameHi      String   @default("") @map("name_hi")
+  nameGu      String   @default("") @map("name_gu")
+  description String   @default("")
+  image       String?
+
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+
+  items       GlobalMenuItem[]
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("global_categories")
+}
+
+model GlobalMenuItem {
+  id          String         @id @default(uuid())
+  
+  categoryId  String         @map("category_id")
+  category    GlobalCategory @relation(fields: [categoryId], references: [id])
+
+  name        String
+  nameHi      String   @default("") @map("name_hi")
+  nameGu      String   @default("") @map("name_gu")
+  description String   @default("")
+  
+  price       Float?   // Suggested price
+  image       Json?    // { url, publicId }
+  
+  // Attributes
+  isVegetarian Boolean @default(false) @map("is_vegetarian")
+  isVegan      Boolean @default(false) @map("is_vegan")
+  spiceLevel   String  @default("medium") @map("spice_level")
+
+  // JSON fields for flexibility
+  variants    Json?    @default("[]")
+  addOnGroups Json?    @default("[]") @map("add_on_groups")
+  tags        Json?    @default("[]")
+
+  isActive    Boolean  @default(true) @map("is_active")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([categoryId])
+  @@map("global_menu_items")
+}
+
+// ──────────────────────────────────────
+// Table (from modules/table/models/table.model.js)
+// ──────────────────────────────────────
+model Table {
+  id           String  @id @default(uuid())
+  tableNumber  String  @default("General QR") @map("table_number")
+  section      String?
+  type         String? // e.g. "cinema"
+
+  // Cinema-specific
+  screen        String?
+  totalRows     Int?    @map("total_rows")
+  seatsPerRow   Int?    @map("seats_per_row")
+  totalCapacity Int?    @map("total_capacity")
+  rowConfig     Json?   @map("row_config")
+  row           String?
+  seat          String?
+
+  shopId      String? @map("shop_id")
+  shop        Shop?   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  foodCourtId String? @map("food_court_id")
+
+  qrIdentifier String @unique @default(uuid()) @map("qr_identifier")
+  isActive     Boolean @default(true) @map("is_active")
+
+  sessions TableSession[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders       Order[]
+
+  @@index([shopId])
+  @@index([foodCourtId])
+  @@map("tables")
+}
+
+// ──────────────────────────────────────
+// TableSession (from modules/table/models/tableSession.model.js)
+// ──────────────────────────────────────
+model TableSession {
+  id    String @id @default(uuid())
+
+  tableId String @map("table_id")
+  table   Table  @relation(fields: [tableId], references: [id])
+
+  shopId String @map("shop_id")
+  shop   Shop   @relation(fields: [shopId], references: [id])
+
+  additionalTables Json?  @default("[]") @map("additional_tables") // merged table IDs
+  status           String @default("ACTIVE") // ACTIVE, PAYMENT_PENDING, CLOSED
+  sessionCode      String @map("session_code")
+  customerName     String @default("Walk-in Guest") @map("customer_name")
+  pax              Int    @default(1)
+  managedBy        String @default("VENDOR") @map("managed_by") // VENDOR, CUSTOMER
+
+  openedAt DateTime  @default(now()) @map("opened_at")
+  closedAt DateTime? @map("closed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders         Order[]
+
+  @@index([shopId])
+  @@index([tableId])
+  @@map("table_sessions")
+}
+// ──────────────────────────────────────
+// Cart (from modules/cart/models/cart.model.js)
+// ──────────────────────────────────────
+model Cart {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+
+  shopId      String?  @map("shop_id")
+  shop        Shop?    @relation(fields: [shopId], references: [id])
+  foodCourtId String?  @map("food_court_id")
+
+  items     CartItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String   @map("cart_id")
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  menuItemId String   @map("menu_item_id")
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+
+  name      String
+  price     Float
+  quantity  Int
+  
+  variant   Json?   // { _id, name, price }
+  addOns    Json?   // [{ _id, name, price }]
+
+  shopId    String  @map("shop_id") // Crucial for multi-shop carts
+  shop      Shop    @relation(fields: [shopId], references: [id])
+
+  @@map("cart_items")
+}
+
+// ──────────────────────────────────────
+// Order (Merged Order + ParentOrder)
+// ──────────────────────────────────────
+model Order {
+  id              String   @id @default(uuid())
+  shortOrderId    String   @unique @map("short_order_id")
+
+  // Relations
+  userId          String?  @map("user_id")
+  user            User?    @relation(fields: [userId], references: [id])
+  
+  shopId          String?  @map("shop_id") // Optional for ParentOrder
+  shop            Shop?    @relation(fields: [shopId], references: [id])
+
+  foodCourtId     String?  @map("food_court_id") // Optional for Single Order
+
+  tableId         String?  @map("table_id")
+  table           Table?   @relation(fields: [tableId], references: [id])
+
+  tableSessionId  String?  @map("table_session_id")
+  tableSession    TableSession? @relation(fields: [tableSessionId], references: [id])
+
+  // Parent/Child Relation (for Food Court Orders)
+  parentOrderId   String?  @map("parent_order_id")
+  parentOrder     Order?   @relation("ParentChildOrder", fields: [parentOrderId], references: [id])
+  subOrders       Order[]  @relation("ParentChildOrder")
+
+  // Order Details
+  orderType       String   @default("Dining") @map("order_type") // Dining, Parcel
+  orderStatus     String   @default("Pending") @map("order_status") // Payment Pending, Pending, Accepted, Preparing, Ready, Completed, Cancelled, Rejected
+
+  // Items (Empty for ParentOrder)
+  items           OrderItem[]
+
+  // Pricing
+  subtotal        Float
+  totalAmount     Float    @map("total_amount")
+  taxDetails      Json?    @map("tax_details") // Snapshot
+
+  // Payment
+  paymentMethod   String   @map("payment_method") // COD, Online, UPI, Card
+  paymentStatus   String   @default("UNPAID") @map("payment_status") // UNPAID, PAID, FAILED, REFUNDED
+  paymentDeadline DateTime? @map("payment_deadline")
+
+  // Payment Gateway
+  razorpayOrderId     String? @map("razorpay_order_id")
+  razorpayPaymentId   String? @map("razorpay_payment_id")
+  razorpaySignature   String? @map("razorpay_signature")
+  cashfreeOrderId     String? @map("cashfree_order_id")
+  cashfreePaymentId   String? @map("cashfree_payment_id")
+
+  // Metadata
+  isPOS           Boolean  @default(false) @map("is_pos")
+  customerDetails Json?    @map("customer_details") // { name, phone }
+  seatInfo        Json?    @map("seat_info")        // { screen, row, seat }
+  notes           String?
+  inventoryDeducted Boolean @default(false) @map("inventory_deducted")
+
+  completedAt     DateTime? @map("completed_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Invoices (One order can have one invoice usually, but keeping relationship flexible)
+  invoices        Invoice[]
+  review          Review?
+
+  @@index([shopId])
+  @@index([userId])
+  @@index([parentOrderId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String   @map("order_id")
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  menuItemId String   @map("menu_item_id")
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+
+  name      String
+  price     Float
+  quantity  Int
+  
+  variant   Json?
+  addOns    Json?
+
+  @@map("order_items")
+}
+
+// ──────────────────────────────────────
+// Invoice (from modules/invoice/models/invoice.model.js)
+// ──────────────────────────────────────
+model Invoice {
+  id            String   @id @default(uuid())
+  invoiceNumber String   @unique @map("invoice_number")
+
+  orderId       String?  @map("order_id")
+  order         Order?   @relation(fields: [orderId], references: [id])
+  
+  // Can also reference parent order if needed, but Order relation covers both via ID
+  // Legacy had sourceOrder and sourceParentOrder. We'll stick to orderId and infer type from Order.
+
+  userId        String?  @map("user_id")
+  user          User?    @relation(fields: [userId], references: [id])
+
+  items         Json     // Snapshot of items at time of invoice
+  subtotal      Float
+  taxAmount     Float    @default(0) @map("tax_amount")
+  grandTotal    Float    @map("grand_total")
+  
+  status        String   @default("PAID") // PAID, CANCELLED, REFUNDED
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("invoices")
+}
+
+// ──────────────────────────────────────
+// Franchise (from modules/franchise/models/franchise.model.js)
+// ──────────────────────────────────────
+model Franchise {
+  id          String  @id @default(uuid())
+  name        String
+  logo        String?
+  description String?
+
+  // Owner
+  ownerId     String  @unique @map("owner_id")
+  owner       Vendor  @relation(fields: [ownerId], references: [id])
+
+  // Settings (JSON)
+  settings    Json?   @default("{}") // enforceMenuTemplate, allowLocalPricing, etc.
+  
+  // Subscription (JSON)
+  subscription Json?  @default("{}") // plan, maxOutlets, validUntil
+
+  // Contact (JSON)
+  contact     Json?   @default("{}") // email, phone, address
+
+  isActive    Boolean @default(true) @map("is_active")
+
+  // Relations
+  shops       Shop[]
+  joinRequests ShopRequest[]
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("franchises")
+}
+
+// ──────────────────────────────────────
+// Food Court (from modules/foodCourt/models/foodCourt.model.js)
+// ──────────────────────────────────────
+model FoodCourt {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  address     String
+  city        String
+  
+  // Manager (Vendor with role 'food_court_manager' usually)
+  managerId   String? @map("manager_id") @unique
+  manager     Vendor? @relation("FoodCourtManager", fields: [managerId], references: [id])
+
+  isActive    Boolean @default(true) @map("is_active")
+
+  // Relations
+  shops       Shop[]
+  joinRequests ShopRequest[]
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("food_courts")
+}
+
+// ──────────────────────────────────────
+// Shop Request (Join Requests for FC/Franchise)
+// ──────────────────────────────────────
+model ShopRequest {
+  id          String   @id @default(uuid())
+  shopId      String   @map("shop_id")
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  
+  // Target
+  foodCourtId String?  @map("food_court_id") 
+  foodCourt   FoodCourt? @relation(fields: [foodCourtId], references: [id])
+  
+  franchiseId String?  @map("franchise_id")
+  franchise   Franchise? @relation(fields: [franchiseId], references: [id])
+  
+  type        String   @default("JOIN_FOOD_COURT") // JOIN_FOOD_COURT, JOIN_FRANCHISE
+  status      String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  message     String?
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([shopId])
+  @@index([foodCourtId])
+  @@index([franchiseId])
+  @@map("shop_requests")
+}
+
+// ──────────────────────────────────────
+// Notification
+// ──────────────────────────────────────
+model Notification {
+  id          String   @id @default(uuid())
+  
+  // Recipient (Polymorphic-ish via separate fields)
+  userId      String?  @map("user_id")
+  user        User?    @relation(fields: [userId], references: [id])
+  
+  vendorId    String?  @map("vendor_id")
+  vendor      Vendor?  @relation(fields: [vendorId], references: [id])
+
+  title       String
+  body        String
+  type        String   @default("INFO") // INFO, ORDER, ALERT, PROMO
+  isRead      Boolean  @default(false) @map("is_read")
+  
+  metadata    Json?    // Extra data like { orderId: "..." }
+
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([vendorId])
+  @@map("notifications")
+}
+
+// ──────────────────────────────────────
+// Review
+// ──────────────────────────────────────
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int      // 1-5
+  comment   String?
+  reply     String?  // Vendor reply
+  isHidden  Boolean  @default(false) @map("is_hidden")
+
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+
+  shopId    String   @map("shop_id")
+  shop      Shop     @relation(fields: [shopId], references: [id])
+
+  orderId   String   @unique @map("order_id")
+  order     Order    @relation(fields: [orderId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([shopId])
+  @@index([userId])
+  @@map("reviews")
+}
+
+// ──────────────────────────────────────
+// Inventory (Ingredients, Recipes, Suppliers)
+// ──────────────────────────────────────
+
+model Ingredient {
+  id                String   @id @default(uuid())
+  shopId            String   @map("shop_id")
+  shop              Shop     @relation(fields: [shopId], references: [id])
+  
+  name              String
+  unit              String   // g, kg, ml, l, pc
+  category          String   @default("General")
+  
+  currentStock      Float    @default(0) @map("current_stock")
+  costPerUnit       Float    @default(0) @map("cost_per_unit")
+  lowStockThreshold Float    @default(0) @map("low_stock_threshold")
+  
+  supplierName      String?  @map("supplier_name")
+  supplierContact   String?  @map("supplier_contact")
+  
+  lastPurchaseCost  Float?   @map("last_purchase_cost")
+  lastPurchaseDate  DateTime? @map("last_purchase_date")
+  
+  stockHistory      StockHistory[]
+  
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@unique([shopId, name])
+  @@index([shopId])
+  @@map("ingredients")
+}
+
+model Recipe {
+  id          String   @id @default(uuid())
+  shopId      String   @map("shop_id")
+  shop        Shop     @relation(fields: [shopId], references: [id])
+  
+  menuItemId  String   @map("menu_item_id")
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id])
+  
+  variantName String?  @map("variant_name") // Null if no variant
+  
+  // Storing as JSON to avoid excessive joins
+  // [{ ingredientId: string, quantity: number }]
+  ingredients Json     
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([shopId, menuItemId, variantName])
+  @@index([shopId])
+  @@map("recipes")
+}
+
+model StockHistory {
+  id             String   @id @default(uuid())
+  shopId         String   @map("shop_id")
+  shop           Shop     @relation(fields: [shopId], references: [id])
+  
+  ingredientId   String   @map("ingredient_id")
+  ingredient     Ingredient @relation(fields: [ingredientId], references: [id])
+  
+  changeType     String   @map("change_type") // PURCHASE, SALE, WASTAGE, ADJUSTMENT
+  quantityChange Float    @map("quantity_change")
+  stockAfter     Float    @map("stock_after")
+  
+  reason         String?
+  
+  performedById  String?  @map("performed_by_id")
+  performedBy    Vendor?  @relation(fields: [performedById], references: [id])
+
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([shopId])
+  @@index([ingredientId])
+  @@map("stock_history")
+}
+
+model Supplier {
+  id        String   @id @default(uuid())
+  shopId    String   @map("shop_id")
+  shop      Shop     @relation(fields: [shopId], references: [id])
+  
+  name      String
+  contact   String?
+  email     String?
+  address   String?
+  
+  purchaseOrders PurchaseOrder[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([shopId])
+  @@map("suppliers")
+}
+
+model PurchaseOrder {
+  id                 String   @id @default(uuid())
+  poNumber           String   @unique @map("po_number")
+  
+  shopId             String   @map("shop_id")
+  shop               Shop     @relation(fields: [shopId], references: [id])
+  
+  supplierId         String?  @map("supplier_id")
+  supplier           Supplier? @relation(fields: [supplierId], references: [id])
+  
+  // [{ ingredientId, name, quantity, expectedCost, receivedQuantity }]
+  items              Json     
+  
+  totalEstimatedCost Float    @map("total_estimated_cost")
+  status             String   @default("DRAFT") // DRAFT, SENT, RECEIVED, CANCELLED
+  
+  notes              String?
+  expectedDeliveryDate DateTime? @map("expected_delivery_date")
+  
+  sentAt             DateTime? @map("sent_at")
+  receivedAt         DateTime? @map("received_at")
+  receivedById       String?   @map("received_by_id") // Vendor ID
+
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@index([shopId])
+  @@map("purchase_orders")
+}
+
+// ──────────────────────────────────────
+// Administration & Analytics
+// ──────────────────────────────────────
+
+model AdminBroadcast {
+  id          String   @id @default(uuid())
+  
+  recipientId String?  @map("recipient_id") // Null for ALL shops
+  recipient   Shop?    @relation(fields: [recipientId], references: [id])
+  
+  title       String
+  message     String
+  
+  // Array of Shop IDs who have read this
+  readBy      String[] @map("read_by")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([recipientId])
+  @@map("admin_broadcasts")
+}
+
+model SystemConfig {
+  id          String   @id @default(uuid())
+  key         String   @unique // e.g., "PAYMENT_CONFIG"
+  value       Json     // The actual config object
+  description String?
+  updatedBy   String?  @map("updated_by") // Vendor/User ID
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("system_configs")
 }

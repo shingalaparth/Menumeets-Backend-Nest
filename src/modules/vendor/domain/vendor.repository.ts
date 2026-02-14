@@ -11,6 +11,7 @@ export interface VendorRepository {
     findById(id: string): Promise<VendorEntity | null>;
     findByEmail(email: string): Promise<VendorEntity | null>;
     findByEmailOrPhone(email: string, phone: string): Promise<VendorEntity | null>;
+    findStaffByOwner(ownerId: string): Promise<VendorEntity[]>;
     findAll(): Promise<Partial<VendorEntity>[]>;
 
     // Mutations
