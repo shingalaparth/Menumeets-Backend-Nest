@@ -13,21 +13,24 @@ const notification_service_1 = require("./application/notification.service");
 const notification_gateway_1 = require("./application/notification.gateway");
 const notification_repository_1 = require("./domain/notification.repository");
 const notification_prisma_repository_1 = require("./infrastructure/notification.prisma.repository");
+const events_service_1 = require("../../shared/services/events.service");
 let NotificationModule = class NotificationModule {
 };
 exports.NotificationModule = NotificationModule;
 exports.NotificationModule = NotificationModule = __decorate([
+    (0, common_1.Global)(),
     (0, common_1.Module)({
         controllers: [notification_controller_1.NotificationController],
         providers: [
             notification_service_1.NotificationService,
             notification_gateway_1.NotificationGateway,
+            events_service_1.EventsService,
             {
                 provide: notification_repository_1.NOTIFICATION_REPOSITORY,
                 useClass: notification_prisma_repository_1.NotificationPrismaRepository,
             },
         ],
-        exports: [notification_service_1.NotificationService],
+        exports: [notification_service_1.NotificationService, notification_gateway_1.NotificationGateway, events_service_1.EventsService],
     })
 ], NotificationModule);
 //# sourceMappingURL=notification.module.js.map

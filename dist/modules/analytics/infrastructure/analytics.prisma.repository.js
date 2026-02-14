@@ -231,6 +231,89 @@ let AnalyticsPrismaRepository = class AnalyticsPrismaRepository {
         }
         return Array.from(customerMap.values()).sort((a, b) => new Date(b.firstOrderDate).getTime() - new Date(a.firstOrderDate).getTime());
     }
+    async getPaymentAnalytics(shopId, startDate, endDate) {
+        const result = await this.prisma.order.groupBy({
+            by: ['paymentMethod'],
+            where: {
+                shopId,
+                orderStatus: 'Completed',
+                createdAt: { gte: startDate, lte: endDate }
+            },
+            _sum: { totalAmount: true },
+            _count: true
+        });
+        return result.map(r => ({
+            method: r.paymentMethod || 'Unknown',
+            count: r._count,
+            amount: r._sum.totalAmount || 0
+        }));
+    }
+    async getCategoryPerformance(shopId, startDate, endDate) {
+        const itemStats = await this.prisma.orderItem.groupBy({
+            by: ['menuItemId'],
+            where: {
+                order: {
+                    shopId,
+                    orderStatus: 'Completed',
+                    createdAt: { gte: startDate, lte: endDate }
+                }
+            },
+            _sum: { quantity: true, price: true }
+        });
+        const result = await this.prisma.$queryRaw `
+            SELECT 
+                c.name as "categoryName",
+                COUNT(oi.id) as "itemCount",
+                SUM(oi.price * oi.quantity) as "revenue"
+            FROM "order_items" oi
+            JOIN "menu_items" mi ON oi."menu_item_id" = mi.id
+            JOIN "categories" c ON mi."category_id" = c.id
+            JOIN "orders" o ON oi."order_id" = o.id
+            WHERE o."shop_id" = ${shopId}
+            AND o."order_status" = 'Completed'
+            AND o."created_at" >= ${startDate}
+            AND o."created_at" <= ${endDate}
+            GROUP BY c.name
+            ORDER BY "revenue" DESC
+        `;
+        return result.map((r) => ({
+            category: r.categoryName,
+            count: Number(r.itemCount),
+            revenue: Number(r.revenue)
+        }));
+    }
+    async getInvoiceStats(shopId, startDate, endDate) {
+        const stats = await this.prisma.invoice.groupBy({
+            by: ['status'],
+            where: {
+                order: {
+                    shopId,
+                    createdAt: { gte: startDate, lte: endDate }
+                }
+            },
+            _count: true,
+            _sum: { grandTotal: true }
+        });
+        const result = {
+            totalInvoices: 0,
+            paidAmount: 0,
+            pendingAmount: 0,
+            cancelledAmount: 0
+        };
+        stats.forEach(s => {
+            result.totalInvoices += s._count;
+            if (s.status === 'PAID') {
+                result.paidAmount += (s._sum.grandTotal || 0);
+            }
+            else if (s.status === 'UNPAID' || s.status === 'PENDING') {
+                result.pendingAmount += (s._sum.grandTotal || 0);
+            }
+            else if (s.status === 'CANCELLED') {
+                result.cancelledAmount += (s._sum.grandTotal || 0);
+            }
+        });
+        return result;
+    }
 };
 exports.AnalyticsPrismaRepository = AnalyticsPrismaRepository;
 exports.AnalyticsPrismaRepository = AnalyticsPrismaRepository = __decorate([

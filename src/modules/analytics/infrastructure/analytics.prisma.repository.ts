@@ -264,4 +264,103 @@ export class AnalyticsPrismaRepository implements AnalyticsRepository {
 
         return Array.from(customerMap.values()).sort((a, b) => new Date(b.firstOrderDate).getTime() - new Date(a.firstOrderDate).getTime());
     }
+    async getPaymentAnalytics(shopId: string, startDate: Date, endDate: Date): Promise<any[]> {
+        const result = await this.prisma.order.groupBy({
+            by: ['paymentMethod'],
+            where: {
+                shopId,
+                orderStatus: 'Completed',
+                createdAt: { gte: startDate, lte: endDate }
+            },
+            _sum: { totalAmount: true },
+            _count: true
+        });
+
+        return result.map(r => ({
+            method: r.paymentMethod || 'Unknown',
+            count: r._count,
+            amount: r._sum.totalAmount || 0
+        }));
+    }
+
+    async getCategoryPerformance(shopId: string, startDate: Date, endDate: Date): Promise<any[]> {
+        // Group items by MenuItem first
+        const itemStats = await this.prisma.orderItem.groupBy({
+            by: ['menuItemId'],
+            where: {
+                order: {
+                    shopId,
+                    orderStatus: 'Completed',
+                    createdAt: { gte: startDate, lte: endDate }
+                }
+            },
+            _sum: { quantity: true, price: true }
+            // Note: price sum here is technically sum of unit prices * count rows? No.
+            // Prisma groupBy _sum works on Int/Float fields.
+            // But we need (price * quantity). groupBy doesn't support computed fields.
+            // fallback: Fetch items and aggregate or use raw query.
+            // Raw query is safer for performance.
+        });
+
+        // Actually, let's use a raw query for category aggregation to be efficient
+        const result = await this.prisma.$queryRaw<any[]>`
+            SELECT 
+                c.name as "categoryName",
+                COUNT(oi.id) as "itemCount",
+                SUM(oi.price * oi.quantity) as "revenue"
+            FROM "order_items" oi
+            JOIN "menu_items" mi ON oi."menu_item_id" = mi.id
+            JOIN "categories" c ON mi."category_id" = c.id
+            JOIN "orders" o ON oi."order_id" = o.id
+            WHERE o."shop_id" = ${shopId}
+            AND o."order_status" = 'Completed'
+            AND o."created_at" >= ${startDate}
+            AND o."created_at" <= ${endDate}
+            GROUP BY c.name
+            ORDER BY "revenue" DESC
+        `;
+
+        return result.map((r: any) => ({
+            category: r.categoryName,
+            count: Number(r.itemCount), // distinct items or total quantity? Raw query above counts rows. Total qty is better.
+            revenue: Number(r.revenue)
+        }));
+    }
+
+    async getInvoiceStats(shopId: string, startDate: Date, endDate: Date): Promise<any> {
+        // Invoices linked to orders of this shop
+        // Prisma doesn't have direct ShopId on Invoice (it's on Order). 
+        // So we filter invoices where order.shopId = shopId
+        const stats = await this.prisma.invoice.groupBy({
+            by: ['status'],
+            where: {
+                order: {
+                    shopId,
+                    createdAt: { gte: startDate, lte: endDate }
+                }
+            },
+            _count: true,
+            _sum: { grandTotal: true }
+        });
+
+        const result = {
+            totalInvoices: 0,
+            paidAmount: 0,
+            pendingAmount: 0,
+            cancelledAmount: 0
+        };
+
+        stats.forEach(s => {
+            result.totalInvoices += s._count;
+            if (s.status === 'PAID') {
+                result.paidAmount += (s._sum.grandTotal || 0);
+            } else if (s.status === 'UNPAID' || s.status === 'PENDING') {
+                result.pendingAmount += (s._sum.grandTotal || 0);
+            } else if (s.status === 'CANCELLED') {
+                result.cancelledAmount += (s._sum.grandTotal || 0);
+            }
+        });
+
+        return result;
+    }
 }

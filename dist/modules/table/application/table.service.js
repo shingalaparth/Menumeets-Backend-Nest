@@ -81,6 +81,9 @@ let TableService = class TableService {
             throw new common_1.NotFoundException('Session not found');
         return { session, orders: [] };
     }
+    async getClosedSessions(shopId, page = 1, limit = 20) {
+        return this.repo.findClosedSessionsByShopIdPaginated(shopId, page, limit);
+    }
     async changeTableSession(shopId, vendor, body) {
         await this.shopService.checkOwnership(shopId, vendor);
         const isOccupied = await this.repo.findActiveSessionByTable(body.newTableId);

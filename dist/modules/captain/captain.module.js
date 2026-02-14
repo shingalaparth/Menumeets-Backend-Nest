@@ -14,6 +14,7 @@ const shop_module_1 = require("../shop/shop.module");
 const order_module_1 = require("../order/order.module");
 const table_module_1 = require("../table/table.module");
 const invoice_module_1 = require("../invoice/invoice.module");
+const prisma_module_1 = require("../../infrastructure/database/prisma.module");
 const jwt_1 = require("@nestjs/jwt");
 const config_1 = require("@nestjs/config");
 let CaptainModule = class CaptainModule {
@@ -26,6 +27,7 @@ exports.CaptainModule = CaptainModule = __decorate([
             order_module_1.OrderModule,
             table_module_1.TableModule,
             invoice_module_1.InvoiceModule,
+            prisma_module_1.PrismaModule,
             jwt_1.JwtModule.registerAsync({
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],

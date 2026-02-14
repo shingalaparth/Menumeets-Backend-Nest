@@ -13,6 +13,7 @@ exports.CashfreeService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const axios_1 = require("axios");
+const crypto = require("crypto");
 let CashfreeService = class CashfreeService {
     constructor(configService) {
         this.configService = configService;
@@ -73,6 +74,36 @@ let CashfreeService = class CashfreeService {
                 'x-client-secret': this.secretKey,
                 'x-api-version': '2023-08-01',
             },
+        });
+        return response.data;
+    }
+    async getVendorStatus(vendorId) {
+        const response = await axios_1.default.get(`${this.baseUrl}/easy-split/vendors/${vendorId}`, {
+            headers: {
+                'x-client-id': this.appId,
+                'x-client-secret': this.secretKey,
+                'x-api-version': '2023-08-01',
+            },
+        });
+        return response.data;
+    }
+    verifySignature(signature, rawBody) {
+        const computedSignature = crypto
+            .createHmac('sha256', this.secretKey)
+            .update(rawBody)
+            .digest('base64');
+        return computedSignature === signature;
+    }
+    async createRefund(orderId, amount, refundId) {
+        const response = await axios_1.default.post(`${this.baseUrl}/orders/${orderId}/refunds`, {
+            refund_amount: amount,
+            refund_id: refundId,
+        }, {
+            headers: {
+                'x-api-version': '2023-08-01',
+                'x-client-id': this.appId,
+                'x-client-secret': this.secretKey,
+            }
         });
         return response.data;
     }

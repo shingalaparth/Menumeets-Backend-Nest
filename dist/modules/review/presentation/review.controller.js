@@ -28,6 +28,9 @@ let ReviewController = class ReviewController {
     async getShopReviews(shopId, page) {
         return this.service.getReviewsForShop(shopId, Number(page) || 1);
     }
+    async replyToReview(req, id, reply) {
+        return this.service.replyToReview(req.vendor?.id || req.user?.id, id, reply);
+    }
     async getVendorReviews(req, page) {
         return this.service.getReviewsForVendor(req.vendor.id, Number(page) || 1);
     }
@@ -51,6 +54,17 @@ __decorate([
     __metadata("design:paramtypes", [String, Number]),
     __metadata("design:returntype", Promise)
 ], ReviewController.prototype, "getShopReviews", null);
+__decorate([
+    (0, common_1.Patch)(':id/reply'),
+    (0, common_1.UseGuards)(universal_auth_guard_1.UniversalAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin', 'franchise_owner'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)('reply')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:returntype", Promise)
+], ReviewController.prototype, "replyToReview", null);
 __decorate([
     (0, common_1.Get)('vendor'),
     (0, common_1.UseGuards)(universal_auth_guard_1.UniversalAuthGuard, roles_guard_1.RolesGuard),

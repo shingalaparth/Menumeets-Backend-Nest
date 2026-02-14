@@ -19,26 +19,111 @@ const universal_auth_guard_1 = require("../../../shared/guards/universal-auth.gu
 const roles_guard_1 = require("../../../shared/guards/roles.guard");
 const roles_decorator_1 = require("../../../shared/decorators/roles.decorator");
 let AnalyticsController = class AnalyticsController {
-    constructor(service) {
-        this.service = service;
+    constructor(analyticsService) {
+        this.analyticsService = analyticsService;
     }
-    async getShopDashboard(shopId, duration) {
-        return this.service.getShopAnalytics(shopId, duration);
+    async getShopAnalytics(shopId, duration) {
+        return this.analyticsService.getShopAnalytics(shopId, duration);
+    }
+    async getPeakHoursAnalytics(shopId, duration) {
+        return this.analyticsService.getPeakHoursAnalytics(shopId, duration);
+    }
+    async getComparisonReport(shopId, duration) {
+        return this.analyticsService.getComparisonReport(shopId, duration);
+    }
+    async getCategoryPerformance(shopId, duration) {
+        return this.analyticsService.getCategoryPerformance(shopId, duration);
+    }
+    async getPaymentAnalytics(shopId, duration) {
+        return this.analyticsService.getPaymentAnalytics(shopId, duration);
+    }
+    async getInvoiceStats(shopId, duration) {
+        return this.analyticsService.getInvoiceStats(shopId, duration);
+    }
+    async getDailyReport(shopId) {
+        return this.analyticsService.getShopAnalytics(shopId, 'day');
+    }
+    async getWeeklyReport(shopId) {
+        return this.analyticsService.getShopAnalytics(shopId, 'week');
+    }
+    async getMonthlyReport(shopId) {
+        return this.analyticsService.getShopAnalytics(shopId, 'month');
     }
 };
 exports.AnalyticsController = AnalyticsController;
 __decorate([
-    (0, common_1.Get)('shop/:shopId'),
-    (0, roles_decorator_1.Roles)('vendor', 'admin', 'manager'),
+    (0, common_1.Get)(':shopId'),
     __param(0, (0, common_1.Param)('shopId')),
     __param(1, (0, common_1.Query)('duration')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
-], AnalyticsController.prototype, "getShopDashboard", null);
+], AnalyticsController.prototype, "getShopAnalytics", null);
+__decorate([
+    (0, common_1.Get)(':shopId/peak-hours'),
+    __param(0, (0, common_1.Param)('shopId')),
+    __param(1, (0, common_1.Query)('duration')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getPeakHoursAnalytics", null);
+__decorate([
+    (0, common_1.Get)(':shopId/comparison'),
+    __param(0, (0, common_1.Param)('shopId')),
+    __param(1, (0, common_1.Query)('duration')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getComparisonReport", null);
+__decorate([
+    (0, common_1.Get)(':shopId/categories'),
+    __param(0, (0, common_1.Param)('shopId')),
+    __param(1, (0, common_1.Query)('duration')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getCategoryPerformance", null);
+__decorate([
+    (0, common_1.Get)(':shopId/payments'),
+    __param(0, (0, common_1.Param)('shopId')),
+    __param(1, (0, common_1.Query)('duration')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getPaymentAnalytics", null);
+__decorate([
+    (0, common_1.Get)(':shopId/invoices-stats'),
+    __param(0, (0, common_1.Param)('shopId')),
+    __param(1, (0, common_1.Query)('duration')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getInvoiceStats", null);
+__decorate([
+    (0, common_1.Get)(':shopId/daily'),
+    __param(0, (0, common_1.Param)('shopId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getDailyReport", null);
+__decorate([
+    (0, common_1.Get)(':shopId/weekly'),
+    __param(0, (0, common_1.Param)('shopId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getWeeklyReport", null);
+__decorate([
+    (0, common_1.Get)(':shopId/monthly'),
+    __param(0, (0, common_1.Param)('shopId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getMonthlyReport", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, common_1.Controller)('analytics'),
     (0, common_1.UseGuards)(universal_auth_guard_1.UniversalAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin', 'manager', 'franchise_owner'),
     __metadata("design:paramtypes", [analytics_service_1.AnalyticsService])
 ], AnalyticsController);
 //# sourceMappingURL=analytics.controller.js.map

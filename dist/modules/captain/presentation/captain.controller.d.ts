@@ -1,8 +1,8 @@
 import { CaptainService } from '../application/captain.service';
 export declare class CaptainController {
-    private readonly captainService;
+    private captainService;
     constructor(captainService: CaptainService);
-    login(body: any): Promise<{
+    login(shopId: string, pin: string): Promise<{
         success: boolean;
         token: string;
         shop: {
@@ -12,7 +12,7 @@ export declare class CaptainController {
             settings: import("../../shop/domain/shop.entity").ShopSettings | null | undefined;
         };
     }>;
-    getDashboard(shop: any): Promise<{
+    getDashboard(req: any): Promise<{
         tables: {
             session: any;
             isOccupied: boolean;
@@ -52,9 +52,121 @@ export declare class CaptainController {
             createdAt: Date;
             updatedAt: Date;
         }[];
+        waiterCalls: ({
+            table: {
+                type: string | null;
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                shopId: string | null;
+                isActive: boolean;
+                foodCourtId: string | null;
+                qrIdentifier: string;
+                tableNumber: string;
+                section: string | null;
+                screen: string | null;
+                totalRows: number | null;
+                seatsPerRow: number | null;
+                totalCapacity: number | null;
+                rowConfig: import("@prisma/client/runtime/library").JsonValue | null;
+                row: string | null;
+                seat: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            shopId: string;
+            status: string;
+            tableId: string;
+            sessionId: string | null;
+            resolvedBy: string | null;
+            resolvedAt: Date | null;
+        })[];
     }>;
-    startSession(shop: any, body: any): Promise<import("../../table/domain/table.entity").TableSessionEntity>;
-    closeSession(shop: any, body: any): Promise<{
+    getActiveSessions(req: any): Promise<{
+        totalAmount: number;
+        orderCount: number;
+        table: {
+            type: string | null;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            shopId: string | null;
+            isActive: boolean;
+            foodCourtId: string | null;
+            qrIdentifier: string;
+            tableNumber: string;
+            section: string | null;
+            screen: string | null;
+            totalRows: number | null;
+            seatsPerRow: number | null;
+            totalCapacity: number | null;
+            rowConfig: import("@prisma/client/runtime/library").JsonValue | null;
+            row: string | null;
+            seat: string | null;
+        };
+        orders: ({
+            items: {
+                id: string;
+                name: string;
+                price: number;
+                menuItemId: string;
+                quantity: number;
+                variant: import("@prisma/client/runtime/library").JsonValue | null;
+                addOns: import("@prisma/client/runtime/library").JsonValue | null;
+                orderId: string;
+            }[];
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            shopId: string | null;
+            foodCourtId: string | null;
+            tableId: string | null;
+            userId: string | null;
+            shortOrderId: string;
+            tableSessionId: string | null;
+            parentOrderId: string | null;
+            orderType: string;
+            orderStatus: string;
+            subtotal: number;
+            totalAmount: number;
+            taxDetails: import("@prisma/client/runtime/library").JsonValue | null;
+            paymentMethod: string;
+            paymentStatus: string;
+            paymentDeadline: Date | null;
+            razorpayOrderId: string | null;
+            razorpayPaymentId: string | null;
+            razorpaySignature: string | null;
+            cashfreeOrderId: string | null;
+            cashfreePaymentId: string | null;
+            isPOS: boolean;
+            customerDetails: import("@prisma/client/runtime/library").JsonValue | null;
+            seatInfo: import("@prisma/client/runtime/library").JsonValue | null;
+            notes: string | null;
+            inventoryDeducted: boolean;
+            completedAt: Date | null;
+        })[];
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        shopId: string;
+        status: string;
+        tableId: string;
+        additionalTables: import("@prisma/client/runtime/library").JsonValue | null;
+        sessionCode: string;
+        customerName: string;
+        pax: number;
+        managedBy: string;
+        openedAt: Date;
+        closedAt: Date | null;
+    }[]>;
+    getSessionHistory(req: any, page: string): Promise<{
+        sessions: import("../../table/domain/table.entity").TableSessionEntity[];
+        total: number;
+    }>;
+    startSession(req: any, body: any): Promise<import("../../table/domain/table.entity").TableSessionEntity>;
+    closeSession(req: any, body: any): Promise<{
         message: string;
         invoice: {
             id: string;
@@ -70,4 +182,210 @@ export declare class CaptainController {
             grandTotal: number;
         } | null;
     }>;
+    getSessionDetails(req: any, sessionId: string): Promise<{
+        session: import("../../table/domain/table.entity").TableSessionEntity;
+        orders: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            shopId: string | null;
+            foodCourtId: string | null;
+            tableId: string | null;
+            userId: string | null;
+            shortOrderId: string;
+            tableSessionId: string | null;
+            parentOrderId: string | null;
+            orderType: string;
+            orderStatus: string;
+            subtotal: number;
+            totalAmount: number;
+            taxDetails: import("@prisma/client/runtime/library").JsonValue | null;
+            paymentMethod: string;
+            paymentStatus: string;
+            paymentDeadline: Date | null;
+            razorpayOrderId: string | null;
+            razorpayPaymentId: string | null;
+            razorpaySignature: string | null;
+            cashfreeOrderId: string | null;
+            cashfreePaymentId: string | null;
+            isPOS: boolean;
+            customerDetails: import("@prisma/client/runtime/library").JsonValue | null;
+            seatInfo: import("@prisma/client/runtime/library").JsonValue | null;
+            notes: string | null;
+            inventoryDeducted: boolean;
+            completedAt: Date | null;
+        }[];
+        totalAmount: number;
+        itemCount: number;
+    }>;
+    splitBill(req: any, sessionId: string, splits: number): Promise<{
+        sessionId: string;
+        originalTotal: number;
+        originalSubtotal: number;
+        originalTax: number;
+        splits: {
+            splitNumber: number;
+            subtotal: number;
+            tax: number;
+            total: number;
+        }[];
+        orderCount: number;
+        items: any[];
+    }>;
+    printBill(req: any, sessionId: string): Promise<{
+        shopName: string;
+        shopAddress: string;
+        shopPhone: string;
+        tableNumber: any;
+        sessionCode: string;
+        customerName: string;
+        pax: number;
+        items: any[];
+        subtotal: number;
+        tax: number;
+        total: number;
+        orderCount: number;
+        openedAt: Date;
+        printedAt: Date;
+    }>;
+    changeTable(req: any, body: any): Promise<import("../../table/domain/table.entity").TableSessionEntity>;
+    mergeTables(req: any, body: any): Promise<import("../../table/domain/table.entity").TableSessionEntity>;
+    callWaiter(req: any, body: any): Promise<{
+        message: string;
+        call: {
+            id: string;
+            createdAt: Date;
+            shopId: string;
+            status: string;
+            tableId: string;
+            sessionId: string | null;
+            resolvedBy: string | null;
+            resolvedAt: Date | null;
+        };
+    }>;
+    resolveWaiterCall(req: any, callId: string): Promise<{
+        message: string;
+        call: {
+            id: string;
+            createdAt: Date;
+            shopId: string;
+            status: string;
+            tableId: string;
+            sessionId: string | null;
+            resolvedBy: string | null;
+            resolvedAt: Date | null;
+        };
+    }>;
+    getMenu(req: any): Promise<({
+        menuItems: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            shopId: string;
+            nameHi: string;
+            nameGu: string;
+            description: string;
+            descriptionHi: string;
+            descriptionGu: string;
+            sortOrder: number;
+            isArchived: boolean;
+            archivedAt: Date | null;
+            price: number | null;
+            categoryId: string;
+            sourceGlobalItemId: string | null;
+            image: import("@prisma/client/runtime/library").JsonValue | null;
+            variants: import("@prisma/client/runtime/library").JsonValue | null;
+            addOnGroups: import("@prisma/client/runtime/library").JsonValue | null;
+            isAvailable: boolean;
+            isVegetarian: boolean;
+            isVegan: boolean;
+            isFavorite: boolean;
+            preparationTime: number;
+            spiceLevel: string;
+            tags: import("@prisma/client/runtime/library").JsonValue | null;
+        }[];
+    } & {
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        shopId: string;
+        isActive: boolean;
+        nameHi: string;
+        nameGu: string;
+        description: string;
+        descriptionHi: string;
+        descriptionGu: string;
+        sourceGlobalCategoryId: string | null;
+        sortOrder: number;
+        isArchived: boolean;
+        archivedAt: Date | null;
+    })[]>;
+    placeOrder(req: any, body: any): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        shopId: string | null;
+        foodCourtId: string | null;
+        tableId: string | null;
+        userId: string | null;
+        shortOrderId: string;
+        tableSessionId: string | null;
+        parentOrderId: string | null;
+        orderType: string;
+        orderStatus: string;
+        subtotal: number;
+        totalAmount: number;
+        taxDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        paymentMethod: string;
+        paymentStatus: string;
+        paymentDeadline: Date | null;
+        razorpayOrderId: string | null;
+        razorpayPaymentId: string | null;
+        razorpaySignature: string | null;
+        cashfreeOrderId: string | null;
+        cashfreePaymentId: string | null;
+        isPOS: boolean;
+        customerDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        seatInfo: import("@prisma/client/runtime/library").JsonValue | null;
+        notes: string | null;
+        inventoryDeducted: boolean;
+        completedAt: Date | null;
+    }>;
+    voidItem(req: any, body: any): Promise<{
+        message: string;
+        reason: string | undefined;
+    }>;
+    modifyOrder(req: any, orderId: string, body: any): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        shopId: string | null;
+        foodCourtId: string | null;
+        tableId: string | null;
+        userId: string | null;
+        shortOrderId: string;
+        tableSessionId: string | null;
+        parentOrderId: string | null;
+        orderType: string;
+        orderStatus: string;
+        subtotal: number;
+        totalAmount: number;
+        taxDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        paymentMethod: string;
+        paymentStatus: string;
+        paymentDeadline: Date | null;
+        razorpayOrderId: string | null;
+        razorpayPaymentId: string | null;
+        razorpaySignature: string | null;
+        cashfreeOrderId: string | null;
+        cashfreePaymentId: string | null;
+        isPOS: boolean;
+        customerDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        seatInfo: import("@prisma/client/runtime/library").JsonValue | null;
+        notes: string | null;
+        inventoryDeducted: boolean;
+        completedAt: Date | null;
+    } | null>;
 }

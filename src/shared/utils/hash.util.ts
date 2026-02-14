@@ -1,6 +1,5 @@
 /**
- * Hash Utility — migrated from old utils/hash.js
- * Uses bcryptjs for password hashing and comparison.
+ * Hash Utility
  */
 import * as bcrypt from 'bcryptjs';
 

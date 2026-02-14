@@ -8,6 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotificationGateway = void 0;
 const websockets_1 = require("@nestjs/websockets");
@@ -40,6 +43,7 @@ let NotificationGateway = class NotificationGateway {
             sockets.push(client.id);
             this.userSockets.set(userId, sockets);
             client.join(userId);
+            client.userId = userId;
         }
         catch (e) {
             this.logger.error(`Connection failed: ${e.message}`);
@@ -48,9 +52,42 @@ let NotificationGateway = class NotificationGateway {
     }
     handleDisconnect(client) {
         this.logger.log(`Client disconnected: ${client.id}`);
+        const userId = client.userId;
+        if (userId) {
+            const sockets = this.userSockets.get(userId) || [];
+            const filtered = sockets.filter(s => s !== client.id);
+            if (filtered.length > 0) {
+                this.userSockets.set(userId, filtered);
+            }
+            else {
+                this.userSockets.delete(userId);
+            }
+        }
+    }
+    handleJoinShop(client, data) {
+        if (!data?.shopId)
+            return;
+        const room = `shop-${data.shopId}`;
+        client.join(room);
+        this.logger.log(`Client ${client.id} joined ${room}`);
+        return { event: 'joinedShopRoom', data: { shopId: data.shopId } };
+    }
+    handleLeaveShop(client, data) {
+        if (!data?.shopId)
+            return;
+        const room = `shop-${data.shopId}`;
+        client.leave(room);
+        this.logger.log(`Client ${client.id} left ${room}`);
+        return { event: 'leftShopRoom', data: { shopId: data.shopId } };
     }
     sendToUser(userId, event, payload) {
         this.server.to(userId).emit(event, payload);
+    }
+    emitToShop(shopId, event, payload) {
+        this.server.to(`shop-${shopId}`).emit(event, payload);
+    }
+    broadcast(event, payload) {
+        this.server.emit(event, payload);
     }
     extractToken(client) {
         let auth;
@@ -71,6 +108,22 @@ __decorate([
     (0, websockets_1.WebSocketServer)(),
     __metadata("design:type", socket_io_1.Server)
 ], NotificationGateway.prototype, "server", void 0);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('joinShopRoom'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
+    __metadata("design:returntype", void 0)
+], NotificationGateway.prototype, "handleJoinShop", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('leaveShopRoom'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
+    __metadata("design:returntype", void 0)
+], NotificationGateway.prototype, "handleLeaveShop", null);
 exports.NotificationGateway = NotificationGateway = __decorate([
     (0, websockets_1.WebSocketGateway)({
         cors: {

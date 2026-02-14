@@ -6,6 +6,7 @@ import { ADMIN_REPOSITORY } from './domain/admin.repository';
 import { PrismaModule } from '../../infrastructure/database/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { AuditService } from '../../shared/services/audit.service';
 
 @Module({
     imports: [
@@ -21,11 +22,13 @@ import { ConfigService } from '@nestjs/config';
     controllers: [AdminController],
     providers: [
         AdminService,
+        AuditService,
         {
             provide: ADMIN_REPOSITORY,
             useClass: AdminPrismaRepository
         }
     ],
-    exports: [AdminService]
+    exports: [AdminService, AuditService]
 })
 export class AdminModule { }
+

@@ -104,6 +104,94 @@ let PaymentService = class PaymentService {
         }
         return { success: false, status: orderStatus };
     }
+    async handleWebhook(webhookBody, rawBody, signature) {
+        if (process.env.NODE_ENV === 'production' || signature) {
+            if (!rawBody || !signature) {
+                console.error('[PaymentService] Missing signature/body for webhook verification');
+            }
+            else {
+                const isValid = this.cashfree.verifySignature(signature, rawBody);
+                if (!isValid) {
+                    console.error('[PaymentService] Invalid Signature');
+                    return { success: false, message: 'Invalid Signature' };
+                }
+            }
+        }
+        const { data, type } = webhookBody;
+        if (!data?.order?.order_id) {
+            return { success: false, message: 'Invalid webhook data' };
+        }
+        const orderId = data.order.order_id;
+        const realOrderIdParts = orderId.split('_');
+        const realOrderId = realOrderIdParts[1];
+        const paymentStatus = data.payment?.payment_status || data.order?.order_status;
+        if (type === 'PAYMENT_SUCCESS_WEBHOOK' || paymentStatus === 'SUCCESS' || paymentStatus === 'PAID') {
+            const order = await this.orderService.getOrderById(realOrderId);
+            if (order && order.paymentStatus !== 'PAID') {
+                await this.orderService.updatePaymentStatus(realOrderId, 'PAID', {
+                    cashfreePaymentId: data.payment?.cf_payment_id,
+                    paymentMethod: data.payment?.payment_group || 'ONLINE'
+                });
+                await this.orderService.updateStatus(realOrderId, 'Accepted');
+            }
+            return { success: true, status: 'PAID' };
+        }
+        if (paymentStatus === 'FAILED' || paymentStatus === 'USER_DROPPED') {
+            await this.orderService.updatePaymentStatus(realOrderId, 'FAILED');
+            return { success: true, status: 'FAILED' };
+        }
+        return { success: true, status: paymentStatus };
+    }
+    async initiateRefund(orderId, amount, reason) {
+        const order = await this.orderService.getOrderById(orderId);
+        if (!order)
+            throw new common_1.NotFoundException('Order not found');
+        if (order.paymentStatus !== 'PAID') {
+            throw new common_1.BadRequestException('Order is not paid, cannot refund');
+        }
+        const refundId = `REF_${orderId}_${Date.now()}`;
+        try {
+            const refundRes = await this.cashfree.createRefund(order.cashfreeOrderId, amount, refundId);
+            if (amount >= order.totalAmount) {
+                await this.orderService.updatePaymentStatus(orderId, 'REFUNDED');
+                await this.orderService.updateStatus(orderId, 'Cancelled');
+            }
+            return { success: true, refundId, data: refundRes };
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.response?.data?.message || 'Refund failed');
+        }
+    }
+    async getVendorStatus(shopId) {
+        const shop = await this.shopService.getShopById(shopId);
+        if (!shop)
+            throw new common_1.NotFoundException('Shop not found');
+        const vendorId = shop.cashfreeVendorId;
+        if (!vendorId) {
+            return {
+                onboarded: false,
+                status: 'NOT_ONBOARDED',
+                message: 'Shop has not been onboarded for payments'
+            };
+        }
+        try {
+            const vendorDetails = await this.cashfree.getVendorStatus(vendorId);
+            return {
+                onboarded: true,
+                status: vendorDetails.status || 'ACTIVE',
+                vendorId,
+                details: vendorDetails
+            };
+        }
+        catch (e) {
+            return {
+                onboarded: true,
+                status: 'UNKNOWN',
+                vendorId,
+                error: e.message
+            };
+        }
+    }
 };
 exports.PaymentService = PaymentService;
 exports.PaymentService = PaymentService = __decorate([

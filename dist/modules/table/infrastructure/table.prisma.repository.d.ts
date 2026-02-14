@@ -18,4 +18,8 @@ export declare class TablePrismaRepository implements TableRepository {
     findActiveSessionByTable(tableId: string): Promise<TableSessionEntity | null>;
     createSession(data: CreateTableSessionData): Promise<TableSessionEntity>;
     updateSession(id: string, data: Partial<TableSessionEntity>): Promise<TableSessionEntity>;
+    findClosedSessionsByShopIdPaginated(shopId: string, page: number, limit: number): Promise<{
+        sessions: TableSessionEntity[];
+        total: number;
+    }>;
 }

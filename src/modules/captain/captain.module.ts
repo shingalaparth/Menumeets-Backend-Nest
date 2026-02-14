@@ -5,6 +5,7 @@ import { ShopModule } from '../shop/shop.module';
 import { OrderModule } from '../order/order.module';
 import { TableModule } from '../table/table.module';
 import { InvoiceModule } from '../invoice/invoice.module';
+import { PrismaModule } from '../../infrastructure/database/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -14,6 +15,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         OrderModule,
         TableModule,
         InvoiceModule,
+        PrismaModule,
         JwtModule.registerAsync({
             imports: [ConfigModule],
             inject: [ConfigService],

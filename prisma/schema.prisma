@@ -171,6 +171,8 @@ model Shop {
   purchaseOrders PurchaseOrder[]
   broadcasts     AdminBroadcast[] // Admin messages
   shopRequests   ShopRequest[]
+  waiterCalls    WaiterCall[]
+  settlements    Settlement[]
 
   @@index([ownerId])
   @@index([foodCourtId])
@@ -346,6 +348,7 @@ model Table {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   orders       Order[]
+  waiterCalls  WaiterCall[]
 
   @@index([shopId])
   @@index([foodCourtId])
@@ -846,4 +849,67 @@ model SystemConfig {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("system_configs")
+}
+
+// ──────────────────────────────────────
+// Waiter Call (Captain Module)
+// ──────────────────────────────────────
+model WaiterCall {
+  id         String    @id @default(uuid())
+  shopId     String    @map("shop_id")
+  shop       Shop      @relation(fields: [shopId], references: [id])
+  tableId    String    @map("table_id")
+  table      Table     @relation(fields: [tableId], references: [id])
+  sessionId  String?   @map("session_id")
+  status     String    @default("PENDING") // PENDING, RESOLVED
+  resolvedBy String?   @map("resolved_by")
+  resolvedAt DateTime? @map("resolved_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([shopId])
+  @@map("waiter_calls")
+}
+
+// ──────────────────────────────────────
+// Settlement (Admin Governance)
+// ──────────────────────────────────────
+model Settlement {
+  id          String    @id @default(uuid())
+  shopId      String    @map("shop_id")
+  shop        Shop      @relation(fields: [shopId], references: [id])
+  amount      Float
+  commission  Float     @default(0)
+  netPayout   Float     @map("net_payout")
+  period      String    // "2024-01", "2024-W05"
+  status      String    @default("PENDING") // PENDING, PROCESSED, FAILED
+  processedAt DateTime? @map("processed_at")
+  processedBy String?   @map("processed_by")
+  reference   String?   // Payment reference/UTR
+  metadata    Json?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([shopId])
+  @@map("settlements")
+}
+
+// ──────────────────────────────────────
+// Audit Log (Admin Governance)
+// ──────────────────────────────────────
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String   @map("actor_id")
+  actorType  String   @map("actor_type") // admin, vendor, system
+  action     String   // ORDER_STATUS_CHANGE, SHOP_DELETE, SETTLEMENT_PROCESS
+  entityType String   @map("entity_type") // Order, Shop, Vendor, Settlement
+  entityId   String   @map("entity_id")
+  before     Json?
+  after      Json?
+  metadata   Json?
+  ip         String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
 }

@@ -1,23 +1,17 @@
 /**
- * NestJS Bootstrap — migrated from old server.js
- *
- * Old server.js responsibilities:
- *   1. Create HTTP server               → NestJS handles this
- *   2. Setup Socket.io                   → @nestjs/websockets (Phase 2)
- *   3. Connect to MongoDB               → Prisma handles this (Phase 2)
- *   4. Listen on port                    → app.listen() below
- *
- * Socket.io waiter_call events will be migrated in a Gateway module later.
+ * NestJS Bootstrap
  */
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
+import { Logger } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
 import { TransformInterceptor } from './shared/interceptors/transform.interceptor';
 
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule);
+    const logger = new Logger('Bootstrap');
+    const app = await NestFactory.create(AppModule, { rawBody: true });
 
     const configService = app.get(ConfigService);
     const port = configService.get<number>('app.port', 3000);
@@ -27,11 +21,11 @@ async function bootstrap() {
     // ── Global Prefix ──
     app.setGlobalPrefix('api');
 
-    // ── Global Pipes, Filters, Interceptors (Phase 3) ──
+    // ── Global Pipes, Filters, Interceptors ──
     app.useGlobalFilters(new HttpExceptionFilter());
     app.useGlobalInterceptors(new TransformInterceptor());
 
-    // ── CORS (migrated from old app.js) ──
+    // ── CORS ──
     const allowedOrigins = [
         'http://localhost:5173',
         'http://localhost:3000',
@@ -52,12 +46,12 @@ async function bootstrap() {
         allowedHeaders: ['Content-Type', 'Authorization'],
     });
 
-    // ── Cookie Parser (migrated from old app.js) ──
+    // ── Cookie Parser ──
     app.use(cookieParser());
 
     // ── Start ──
     await app.listen(port);
-    console.log(`🚀 Server running on http://localhost:${port}`);
+    logger.log(`🚀 Server running on http://localhost:${port}`);
 }
 
 bootstrap();

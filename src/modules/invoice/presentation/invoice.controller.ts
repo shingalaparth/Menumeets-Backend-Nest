@@ -1,47 +1,71 @@
-import { Controller, Get, Param, Res, UseGuards, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Param, Query, Req, Res, UseGuards, Body } from '@nestjs/common';
 import { InvoiceService } from '../application/invoice.service';
-import { UniversalAuthGuard } from '../../../shared/guards/universal-auth.guard'; // Protect invoices
-import { CurrentUser } from '../../../shared/decorators/current-user.decorator';
+import { UserAuthGuard } from '../../../shared/guards/user-auth.guard';
+import { VendorAuthGuard } from '../../../shared/guards/vendor-auth.guard';
+import { UniversalAuthGuard } from '../../../shared/guards/universal-auth.guard';
+import { Response } from 'express';
 
 @Controller('invoices')
 export class InvoiceController {
-    constructor(private readonly invoiceService: InvoiceService) { }
+    constructor(private invoiceService: InvoiceService) { }
 
-    // No direct create endpoint for now - created via Order/Session events
+    // ── Vendor: Shop Invoices ──
+    @UseGuards(VendorAuthGuard)
+    @Get('shop/:shopId')
+    async getShopInvoices(
+        @Param('shopId') shopId: string,
+        @Query('page') page?: string,
+        @Query('limit') limit?: string
+    ) {
+        return this.invoiceService.getShopInvoices(shopId, parseInt(page || '1'), parseInt(limit || '20'));
+    }
 
+    // ── User: My Invoices ──
+    @UseGuards(UserAuthGuard)
+    @Get('my')
+    async getMyInvoices(@Req() req: any) {
+        return this.invoiceService.getMyInvoices(req.user.sub);
+    }
+
+    // ── Get Invoice by ID ──
+    @UseGuards(UniversalAuthGuard)
+    @Get(':id')
+    async getInvoiceById(@Param('id') id: string) {
+        return this.invoiceService.getInvoiceById(id);
+    }
+
+    // ── Update Invoice Status ──
+    @UseGuards(VendorAuthGuard)
+    @Patch(':id/status')
+    async updateInvoiceStatus(
+        @Param('id') id: string,
+        @Body('status') status: string
+    ) {
+        return this.invoiceService.updateInvoiceStatus(id, status);
+    }
+
+    // ── Download Invoice PDF by Invoice Number ──
+    @UseGuards(UniversalAuthGuard)
     @Get('download/:invoiceNumber')
-    async downloadInvoice(@Param('invoiceNumber') invoiceNumber: string, @Res() res: any) {
-        // Public or protected? securely: protected. 
-        // But for "Scan QR -> Download Bill", might need to be public or token-based.
-        // For now, let's keep it public for easy download, OR check logic.
-        // Legacy didn't strictly protect download if link known?
+    async downloadInvoice(@Param('invoiceNumber') invoiceNumber: string, @Res() res: Response) {
+        const invoice = await this.invoiceService.getInvoiceByNumber(invoiceNumber);
+        return this.invoiceService.generateInvoicePDF(invoice, res);
+    }
 
-        // Let's protect if possible, but for MVP flexibility:
-        // We'll trust the invoiceNumber is hard to guess.
+    // ── Download Invoice PDF by Order ID ──
+    @UseGuards(UniversalAuthGuard)
+    @Get('order/:orderId/download')
+    async downloadInvoiceByOrder(@Param('orderId') orderId: string, @Res() res: Response) {
+        const invoice = await this.invoiceService.getInvoiceByOrderId(orderId);
+        return this.invoiceService.generateInvoicePDF(invoice, res);
+    }
 
-        // Actually, let's use the repo to find it first.
-        // Direct access to service.repo is not good. Service should have get method.
-        // But service only has create methods so far.
-        // I need to add findByInvoiceNumber to service.
-
-        // Let's skip service method for strictness and just rely on a new method in service:
-        // getInvoiceByNumber(invoiceNumber)
-
-        // Since I can't easily edit service in this step efficiently without multiple tools,
-        // I will implement the logic inside generating PDF in service (it takes invoice object).
-        // I need to fetch it.
-
-        // Let's add getInvoice method to service in next step or use what we have.
-        // Service currently has: createInvoiceForOrder, createConsolidated..., generateInvoicePDF.
-        // It needs a finder.
-
-        // I will add a finder method to Service in a follow-up or re-write service now?
-        // Re-writing service is expensive.
-        // I will add the finder to the Controller using the Repo directly? NO. DDD violation.
-        // I should update the Service.
-
-        // For now, I'll write the controller assuming service has `getInvoiceByNumber`.
-        // Then I'll update service.
-        return null;
+    // ── Generate Invoice from Parent Order ──
+    @UseGuards(VendorAuthGuard)
+    @Post('from-parent-order/:orderId')
+    async generateInvoiceFromParentOrder(@Param('orderId') orderId: string) {
+        // This needs the full parent order with subOrders
+        // The service handles fetching and creation
+        return this.invoiceService.generateInvoiceFromParentOrder({ id: orderId });
     }
 }

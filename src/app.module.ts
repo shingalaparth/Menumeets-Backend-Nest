@@ -1,16 +1,11 @@
 /**
- * Root AppModule — migrated from old app.js
- *
- * Old app.js responsibilities:
- *   1. Express middlewares (json, urlencoded, cors, cookieParser) → main.ts
- *   2. Register all routes                                        → Module imports below
- *   3. Global error handler                                       → HttpExceptionFilter (Phase 3)
- *   4. Attach Socket.io to req                                    → WebSocket Gateway (Phase 2)
- *
- * Modules will be imported here as they are migrated.
+ * Root AppModule
  */
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
+import { APP_GUARD } from '@nestjs/core';
 
 // Config files
 import {
@@ -50,9 +45,14 @@ import { AdminModule } from './modules/admin/admin.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { SystemModule } from './modules/system/system.module';
 
+// Shared Infrastructure Services
+import { QrController } from './shared/presentation/qr.controller';
+import { QrService } from './shared/services/qr.service';
+import { TasksService } from './shared/services/tasks.service';
+
 @Module({
     imports: [
-        // ── Global Config (replaces old config/env.js) ──
+        // ── Global Config ──
         ConfigModule.forRoot({
             isGlobal: true,
             envFilePath: '.env',
@@ -66,12 +66,21 @@ import { SystemModule } from './modules/system/system.module';
             ],
         }),
 
-        // ── Infrastructure (Phase 2) ──
+        // ── Rate Limiting ──
+        ThrottlerModule.forRoot([{
+            ttl: 60000,
+            limit: 100,
+        }]),
+
+        // ── Background Jobs ──
+        ScheduleModule.forRoot(),
+
+        // ── Infrastructure ──
         PrismaModule,
         RedisModule,
         ExternalModule,
 
-        // ── Domain Modules (Phase 4) ──
+        // ── Domain Modules ──
         UserModule,
         VendorModule,
         AuthModule,
@@ -94,7 +103,15 @@ import { SystemModule } from './modules/system/system.module';
         AnalyticsModule,
         SystemModule,
     ],
-    controllers: [],
-    providers: [],
+    controllers: [QrController],
+    providers: [
+        // Global rate limiter
+        {
+            provide: APP_GUARD,
+            useClass: ThrottlerGuard,
+        },
+        QrService,
+        TasksService,
+    ],
 })
 export class AppModule { }

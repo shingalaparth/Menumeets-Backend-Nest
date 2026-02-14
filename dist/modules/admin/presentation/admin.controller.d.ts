@@ -1,7 +1,7 @@
 import { AdminService } from '../application/admin.service';
 export declare class AdminController {
-    private readonly service;
-    constructor(service: AdminService);
+    private adminService;
+    constructor(adminService: AdminService);
     getStats(): Promise<any>;
     getShops(): Promise<{
         count: number;
@@ -29,6 +29,30 @@ export declare class AdminController {
             soundPreferences: import("@prisma/client/runtime/library").JsonValue | null;
             franchiseMenuDistribution: import("@prisma/client/runtime/library").JsonValue | null;
         }[];
+    }>;
+    getShopById(id: string): Promise<{
+        id: string;
+        phone: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        ownerId: string;
+        address: string;
+        businessType: string;
+        isActive: boolean;
+        status: string;
+        franchiseId: string | null;
+        foodCourtId: string | null;
+        region: string | null;
+        captainPin: string | null;
+        kotPin: string | null;
+        upiQrCodeUrl: string | null;
+        cashfreeVendorId: string | null;
+        cashfreeOnboardingStatus: string;
+        settings: import("@prisma/client/runtime/library").JsonValue | null;
+        franchisePolicy: import("@prisma/client/runtime/library").JsonValue | null;
+        soundPreferences: import("@prisma/client/runtime/library").JsonValue | null;
+        franchiseMenuDistribution: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     toggleShopStatus(id: string): Promise<{
         id: string;
@@ -78,6 +102,9 @@ export declare class AdminController {
         soundPreferences: import("@prisma/client/runtime/library").JsonValue | null;
         franchiseMenuDistribution: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
+    deleteShop(id: string): Promise<{
+        message: string;
+    }>;
     getVendors(): Promise<{
         count: number;
         data: {
@@ -101,6 +128,49 @@ export declare class AdminController {
             permissions: import("@prisma/client/runtime/library").JsonValue | null;
         }[];
     }>;
+    getVendorById(id: string): Promise<{
+        id: string;
+        role: string;
+        phone: string;
+        name: string;
+        email: string;
+        createdAt: Date;
+        updatedAt: Date;
+        password: string;
+        parentVendorId: string | null;
+        managesFoodCourt: string | null;
+        managesShop: string | null;
+        personalInfo: import("@prisma/client/runtime/library").JsonValue | null;
+        kyc: import("@prisma/client/runtime/library").JsonValue | null;
+        bankDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        franchiseRoles: import("@prisma/client/runtime/library").JsonValue | null;
+        notificationPreferences: import("@prisma/client/runtime/library").JsonValue | null;
+        security: import("@prisma/client/runtime/library").JsonValue | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
+    }>;
+    updateVendorStatus(id: string): Promise<{
+        id: string;
+        role: string;
+        phone: string;
+        name: string;
+        email: string;
+        createdAt: Date;
+        updatedAt: Date;
+        password: string;
+        parentVendorId: string | null;
+        managesFoodCourt: string | null;
+        managesShop: string | null;
+        personalInfo: import("@prisma/client/runtime/library").JsonValue | null;
+        kyc: import("@prisma/client/runtime/library").JsonValue | null;
+        bankDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        franchiseRoles: import("@prisma/client/runtime/library").JsonValue | null;
+        notificationPreferences: import("@prisma/client/runtime/library").JsonValue | null;
+        security: import("@prisma/client/runtime/library").JsonValue | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
+    }>;
+    deleteVendor(id: string): Promise<{
+        message: string;
+    }>;
     impersonate(id: string): Promise<{
         message: string;
         token: string;
@@ -110,10 +180,109 @@ export declare class AdminController {
             role: string;
         };
     }>;
-    resetPassword(id: string, pass: string): Promise<{
+    resetPassword(id: string, password: string): Promise<{
         message: string;
     }>;
-    sendBroadcast(body: any): Promise<{
+    getAllOrders(page?: string, limit?: string, status?: string, shopId?: string, startDate?: string, endDate?: string): Promise<{
+        orders: import(".prisma/client").Order[];
+        total: number;
+    }>;
+    getOrderById(id: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        shopId: string | null;
+        foodCourtId: string | null;
+        tableId: string | null;
+        userId: string | null;
+        shortOrderId: string;
+        tableSessionId: string | null;
+        parentOrderId: string | null;
+        orderType: string;
+        orderStatus: string;
+        subtotal: number;
+        totalAmount: number;
+        taxDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        paymentMethod: string;
+        paymentStatus: string;
+        paymentDeadline: Date | null;
+        razorpayOrderId: string | null;
+        razorpayPaymentId: string | null;
+        razorpaySignature: string | null;
+        cashfreeOrderId: string | null;
+        cashfreePaymentId: string | null;
+        isPOS: boolean;
+        customerDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        seatInfo: import("@prisma/client/runtime/library").JsonValue | null;
+        notes: string | null;
+        inventoryDeducted: boolean;
+        completedAt: Date | null;
+    }>;
+    updateOrderStatus(id: string, status: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        shopId: string | null;
+        foodCourtId: string | null;
+        tableId: string | null;
+        userId: string | null;
+        shortOrderId: string;
+        tableSessionId: string | null;
+        parentOrderId: string | null;
+        orderType: string;
+        orderStatus: string;
+        subtotal: number;
+        totalAmount: number;
+        taxDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        paymentMethod: string;
+        paymentStatus: string;
+        paymentDeadline: Date | null;
+        razorpayOrderId: string | null;
+        razorpayPaymentId: string | null;
+        razorpaySignature: string | null;
+        cashfreeOrderId: string | null;
+        cashfreePaymentId: string | null;
+        isPOS: boolean;
+        customerDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        seatInfo: import("@prisma/client/runtime/library").JsonValue | null;
+        notes: string | null;
+        inventoryDeducted: boolean;
+        completedAt: Date | null;
+    }>;
+    getAllUsers(page?: string, limit?: string): Promise<{
+        users: import(".prisma/client").User[];
+        total: number;
+    }>;
+    getUserById(id: string): Promise<{
+        id: string;
+        role: string;
+        phone: string;
+        name: string;
+        email: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    getRevenueReport(startDate?: string, endDate?: string): Promise<any>;
+    getTopSellingItems(limit?: string, startDate?: string, endDate?: string): Promise<any[]>;
+    getSystemConfig(): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string | null;
+        key: string;
+        value: import("@prisma/client/runtime/library").JsonValue;
+        updatedBy: string | null;
+    }[]>;
+    updateSystemConfig(key: string, value: any, description?: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string | null;
+        key: string;
+        value: import("@prisma/client/runtime/library").JsonValue;
+        updatedBy: string | null;
+    }>;
+    sendBroadcast(title: string, message: string, recipientId?: string): Promise<{
         message: string;
         id: string;
         createdAt: Date;
@@ -131,4 +300,83 @@ export declare class AdminController {
         recipientId: string | null;
         readBy: string[];
     }[]>;
+    getSettlements(page?: string, limit?: string, shopId?: string, status?: string, period?: string): Promise<{
+        settlements: ({
+            shop: {
+                id: string;
+                name: string;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            metadata: import("@prisma/client/runtime/library").JsonValue | null;
+            shopId: string;
+            status: string;
+            amount: number;
+            period: string;
+            commission: number;
+            netPayout: number;
+            processedAt: Date | null;
+            processedBy: string | null;
+            reference: string | null;
+        })[];
+        pagination: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
+    }>;
+    createSettlement(body: any): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        metadata: import("@prisma/client/runtime/library").JsonValue | null;
+        shopId: string;
+        status: string;
+        amount: number;
+        period: string;
+        commission: number;
+        netPayout: number;
+        processedAt: Date | null;
+        processedBy: string | null;
+        reference: string | null;
+    }>;
+    processSettlement(req: any, id: string, reference?: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        metadata: import("@prisma/client/runtime/library").JsonValue | null;
+        shopId: string;
+        status: string;
+        amount: number;
+        period: string;
+        commission: number;
+        netPayout: number;
+        processedAt: Date | null;
+        processedBy: string | null;
+        reference: string | null;
+    }>;
+    getAuditLogs(actorId?: string, entityType?: string, entityId?: string, action?: string, startDate?: string, endDate?: string, page?: string, limit?: string): Promise<{
+        logs: {
+            id: string;
+            createdAt: Date;
+            action: string;
+            metadata: import("@prisma/client/runtime/library").JsonValue | null;
+            ip: string | null;
+            actorId: string;
+            actorType: string;
+            entityType: string;
+            entityId: string;
+            before: import("@prisma/client/runtime/library").JsonValue | null;
+            after: import("@prisma/client/runtime/library").JsonValue | null;
+        }[];
+        pagination: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
+    }>;
 }

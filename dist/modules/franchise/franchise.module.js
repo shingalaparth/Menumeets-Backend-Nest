@@ -14,12 +14,13 @@ const franchise_service_1 = require("./application/franchise.service");
 const franchise_repository_1 = require("./domain/franchise.repository");
 const franchise_prisma_repository_1 = require("./infrastructure/franchise.prisma.repository");
 const shop_module_1 = require("../shop/shop.module");
+const prisma_module_1 = require("../../infrastructure/database/prisma.module");
 let FranchiseModule = class FranchiseModule {
 };
 exports.FranchiseModule = FranchiseModule;
 exports.FranchiseModule = FranchiseModule = __decorate([
     (0, common_1.Module)({
-        imports: [shop_module_1.ShopModule],
+        imports: [shop_module_1.ShopModule, prisma_module_1.PrismaModule],
         controllers: [franchise_controller_1.FranchiseController, franchise_menu_controller_1.FranchiseMenuController],
         providers: [
             franchise_service_1.FranchiseService,

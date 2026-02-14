@@ -12,6 +12,39 @@ export declare class PaymentController {
         status: string;
     }>;
     handleWebhook(req: any): Promise<{
+        success: boolean;
+        message: string;
+        status?: undefined;
+    } | {
+        success: boolean;
+        status: any;
+        message?: undefined;
+    }>;
+    refundOrder(orderId: string, body: any): Promise<{
+        success: boolean;
+        refundId: string;
+        data: any;
+    }>;
+    getVendorStatus(shopId: string): Promise<{
+        onboarded: boolean;
         status: string;
+        message: string;
+        vendorId?: undefined;
+        details?: undefined;
+        error?: undefined;
+    } | {
+        onboarded: boolean;
+        status: any;
+        vendorId: any;
+        details: any;
+        message?: undefined;
+        error?: undefined;
+    } | {
+        onboarded: boolean;
+        status: string;
+        vendorId: any;
+        error: any;
+        message?: undefined;
+        details?: undefined;
     }>;
 }

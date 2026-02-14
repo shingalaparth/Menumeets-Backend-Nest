@@ -13,5 +13,8 @@ export interface AnalyticsRepository {
     getPeakHours(shopId: string, startDate: Date, endDate: Date): Promise<any[]>;
     getAverageRating(shopId: string): Promise<number>;
     getAllCustomers(shopId: string, startDate: Date, endDate: Date): Promise<any[]>;
+    getPaymentAnalytics(shopId: string, startDate: Date, endDate: Date): Promise<any[]>;
+    getCategoryPerformance(shopId: string, startDate: Date, endDate: Date): Promise<any[]>;
+    getInvoiceStats(shopId: string, startDate: Date, endDate: Date): Promise<any>;
 }
 export declare const ANALYTICS_REPOSITORY = "ANALYTICS_REPOSITORY";

@@ -32,7 +32,16 @@ let PaymentController = class PaymentController {
         return this.paymentService.verifyPayment(body.orderId);
     }
     async handleWebhook(req) {
-        return { status: 'OK' };
+        const rawBody = req.rawBody?.toString();
+        const signature = req.headers['x-webhook-signature'];
+        return this.paymentService.handleWebhook(req.body, rawBody, signature);
+    }
+    async refundOrder(orderId, body) {
+        const { amount, reason } = body;
+        return this.paymentService.initiateRefund(orderId, amount, reason);
+    }
+    async getVendorStatus(shopId) {
+        return this.paymentService.getVendorStatus(shopId);
     }
 };
 exports.PaymentController = PaymentController;
@@ -69,6 +78,23 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], PaymentController.prototype, "handleWebhook", null);
+__decorate([
+    (0, common_1.Post)('refund/:orderId'),
+    (0, common_1.UseGuards)(vendor_auth_guard_1.VendorAuthGuard),
+    __param(0, (0, common_1.Param)('orderId')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], PaymentController.prototype, "refundOrder", null);
+__decorate([
+    (0, common_1.Get)('vendor-status/:shopId'),
+    (0, common_1.UseGuards)(vendor_auth_guard_1.VendorAuthGuard),
+    __param(0, (0, common_1.Param)('shopId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], PaymentController.prototype, "getVendorStatus", null);
 exports.PaymentController = PaymentController = __decorate([
     (0, common_1.Controller)('payment'),
     __metadata("design:paramtypes", [payment_service_1.PaymentService])

@@ -22,21 +22,52 @@ let InvoicePrismaRepository = class InvoicePrismaRepository {
     async findById(id) {
         return this.prisma.invoice.findUnique({
             where: { id },
-            include: { order: true, user: true }
+            include: { order: { include: { shop: true, items: true } }, user: true }
         });
     }
     async findByOrderId(orderId) {
         return this.prisma.invoice.findFirst({
-            where: { orderId }
+            where: { orderId },
+            include: { order: { include: { shop: true, items: true } }, user: true }
         });
     }
     async findByInvoiceNumber(invoiceNumber) {
         return this.prisma.invoice.findUnique({
-            where: { invoiceNumber }
+            where: { invoiceNumber },
+            include: { order: { include: { shop: true, items: true } }, user: true }
         });
     }
     async count() {
         return this.prisma.invoice.count();
+    }
+    async findByShopId(shopId, page, limit) {
+        const where = {
+            order: { shopId }
+        };
+        const [invoices, total] = await Promise.all([
+            this.prisma.invoice.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                skip: (page - 1) * limit,
+                take: limit,
+                include: { order: { include: { items: true } }, user: true }
+            }),
+            this.prisma.invoice.count({ where })
+        ]);
+        return { invoices, total };
+    }
+    async findByUserId(userId) {
+        return this.prisma.invoice.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            include: { order: { include: { shop: true, items: true } } }
+        });
+    }
+    async updateStatus(id, status) {
+        return this.prisma.invoice.update({
+            where: { id },
+            data: { status }
+        });
     }
 };
 exports.InvoicePrismaRepository = InvoicePrismaRepository;

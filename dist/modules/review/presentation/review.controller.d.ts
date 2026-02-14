@@ -35,6 +35,18 @@ export declare class ReviewController {
         };
         stats: any;
     }>;
+    replyToReview(req: any, id: string, reply: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        shopId: string;
+        userId: string;
+        orderId: string;
+        rating: number;
+        comment: string | null;
+        reply: string | null;
+        isHidden: boolean;
+    }>;
     getVendorReviews(req: any, page: number): Promise<{
         reviews: import(".prisma/client").Review[];
         total: number;

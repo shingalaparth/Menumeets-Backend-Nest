@@ -5,9 +5,10 @@ import { FranchiseService } from './application/franchise.service';
 import { FRANCHISE_REPOSITORY } from './domain/franchise.repository';
 import { FranchisePrismaRepository } from './infrastructure/franchise.prisma.repository';
 import { ShopModule } from '../shop/shop.module';
+import { PrismaModule } from '../../infrastructure/database/prisma.module';
 
 @Module({
-    imports: [ShopModule],
+    imports: [ShopModule, PrismaModule],
     controllers: [FranchiseController, FranchiseMenuController],
     providers: [
         FranchiseService,

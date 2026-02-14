@@ -88,11 +88,11 @@ export declare class InventoryController {
         id: string;
         createdAt: Date;
         shopId: string;
+        reason: string | null;
         ingredientId: string;
         changeType: string;
         quantityChange: number;
         stockAfter: number;
-        reason: string | null;
         performedById: string | null;
     }[]>;
     getSuppliers(shopId: string): Promise<{
