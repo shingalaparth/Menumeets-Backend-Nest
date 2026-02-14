@@ -95,11 +95,11 @@ export declare class InventoryService {
         id: string;
         createdAt: Date;
         shopId: string;
+        reason: string | null;
         ingredientId: string;
         changeType: string;
         quantityChange: number;
         stockAfter: number;
-        reason: string | null;
         performedById: string | null;
     }[]>;
     addSupplier(shopId: string, data: any): Promise<{

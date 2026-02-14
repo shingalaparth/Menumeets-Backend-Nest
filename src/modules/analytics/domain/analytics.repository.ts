@@ -15,6 +15,10 @@ export interface AnalyticsRepository {
     getAverageRating(shopId: string): Promise<number>;
 
     getAllCustomers(shopId: string, startDate: Date, endDate: Date): Promise<any[]>;
+
+    getPaymentAnalytics(shopId: string, startDate: Date, endDate: Date): Promise<any[]>;
+    getCategoryPerformance(shopId: string, startDate: Date, endDate: Date): Promise<any[]>;
+    getInvoiceStats(shopId: string, startDate: Date, endDate: Date): Promise<any>;
 }
 
 export const ANALYTICS_REPOSITORY = 'ANALYTICS_REPOSITORY';

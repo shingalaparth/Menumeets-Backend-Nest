@@ -15,6 +15,7 @@ const admin_repository_1 = require("./domain/admin.repository");
 const prisma_module_1 = require("../../infrastructure/database/prisma.module");
 const jwt_1 = require("@nestjs/jwt");
 const config_1 = require("@nestjs/config");
+const audit_service_1 = require("../../shared/services/audit.service");
 let AdminModule = class AdminModule {
 };
 exports.AdminModule = AdminModule;
@@ -33,12 +34,13 @@ exports.AdminModule = AdminModule = __decorate([
         controllers: [admin_controller_1.AdminController],
         providers: [
             admin_service_1.AdminService,
+            audit_service_1.AuditService,
             {
                 provide: admin_repository_1.ADMIN_REPOSITORY,
                 useClass: admin_prisma_repository_1.AdminPrismaRepository
             }
         ],
-        exports: [admin_service_1.AdminService]
+        exports: [admin_service_1.AdminService, audit_service_1.AuditService]
     })
 ], AdminModule);
 //# sourceMappingURL=admin.module.js.map

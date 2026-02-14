@@ -52,9 +52,27 @@ export class ReviewService {
         };
     }
 
+    async replyToReview(vendorId: string, reviewId: string, reply: string) {
+        const review = await this.prisma.review.findUnique({
+            where: { id: reviewId },
+            include: { shop: true }
+        });
+
+        if (!review) throw new NotFoundException('Review not found');
+
+        // Verify vendor owns the shop
+        if ((review as any).shop?.ownerId !== vendorId) {
+            throw new ForbiddenException('You can only reply to reviews on your own shop');
+        }
+
+        return this.prisma.review.update({
+            where: { id: reviewId },
+            data: { reply }
+        });
+    }
+
     async getReviewsForVendor(vendorId: string, page = 1, limit = 20) {
         const skip = (page - 1) * limit;
-        // Logic might need to be adjusted for "managesShop" vs "owner" in repo
         return this.repo.findByVendorId(vendorId, { skip, take: limit });
     }
 }

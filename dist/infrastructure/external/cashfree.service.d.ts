@@ -26,4 +26,7 @@ export declare class CashfreeService {
     createPaymentOrder(payload: CashfreeOrderPayload): Promise<CashfreeOrderResponse>;
     getPaymentStatus(cfOrderId: string): Promise<Record<string, unknown>>;
     createVendor(vendorData: any): Promise<any>;
+    getVendorStatus(vendorId: string): Promise<any>;
+    verifySignature(signature: string, rawBody: string): boolean;
+    createRefund(orderId: string, amount: number, refundId: string): Promise<any>;
 }

@@ -59,6 +59,21 @@ let ReviewService = class ReviewService {
             stats
         };
     }
+    async replyToReview(vendorId, reviewId, reply) {
+        const review = await this.prisma.review.findUnique({
+            where: { id: reviewId },
+            include: { shop: true }
+        });
+        if (!review)
+            throw new common_1.NotFoundException('Review not found');
+        if (review.shop?.ownerId !== vendorId) {
+            throw new common_1.ForbiddenException('You can only reply to reviews on your own shop');
+        }
+        return this.prisma.review.update({
+            where: { id: reviewId },
+            data: { reply }
+        });
+    }
     async getReviewsForVendor(vendorId, page = 1, limit = 20) {
         const skip = (page - 1) * limit;
         return this.repo.findByVendorId(vendorId, { skip, take: limit });

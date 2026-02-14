@@ -48,6 +48,10 @@ export declare class TableService {
         session: import("../domain/table.entity").TableSessionEntity;
         orders: never[];
     }>;
+    getClosedSessions(shopId: string, page?: number, limit?: number): Promise<{
+        sessions: import("../domain/table.entity").TableSessionEntity[];
+        total: number;
+    }>;
     changeTableSession(shopId: string, vendor: any, body: {
         sessionId: string;
         newTableId: string;

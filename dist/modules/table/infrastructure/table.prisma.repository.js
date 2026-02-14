@@ -68,6 +68,20 @@ let TablePrismaRepository = class TablePrismaRepository {
     async updateSession(id, data) {
         return this.prisma.tableSession.update({ where: { id }, data: data });
     }
+    async findClosedSessionsByShopIdPaginated(shopId, page, limit) {
+        const skip = (page - 1) * limit;
+        const [sessions, total] = await Promise.all([
+            this.prisma.tableSession.findMany({
+                where: { shopId, status: 'CLOSED' },
+                orderBy: { closedAt: 'desc' },
+                skip,
+                take: limit,
+                include: { table: true }
+            }),
+            this.prisma.tableSession.count({ where: { shopId, status: 'CLOSED' } })
+        ]);
+        return { sessions: sessions, total };
+    }
 };
 exports.TablePrismaRepository = TablePrismaRepository;
 exports.TablePrismaRepository = TablePrismaRepository = __decorate([

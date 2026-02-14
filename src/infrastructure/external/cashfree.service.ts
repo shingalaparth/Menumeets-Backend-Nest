@@ -1,17 +1,10 @@
 /**
- * Cashfree Service — migrated from old config/cashfree.js + utils/paymentUtils.js
- *
- * Old: Cashfree SDK init + initializeCashfreePayment() utility
- * New: Injectable service with same payment initialization logic
- *
- * NOTE: The full initializeCashfreePayment() logic (order lookup, split calculation)
- * depends on Order/Shop models which aren't migrated yet.
- * This service provides the low-level Cashfree API interaction.
- * The order-level payment logic will live in modules/payment/application/ later.
+ * Cashfree Service
  */
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import * as crypto from 'crypto';
 
 export interface CashfreeOrderPayload {
     orderId: string;
@@ -112,6 +105,50 @@ export class CashfreeService {
                 'x-client-secret': this.secretKey,
                 'x-api-version': '2023-08-01',
             },
+        });
+        return response.data;
+    }
+
+    /**
+     * Get Vendor Status from Cashfree
+     */
+    async getVendorStatus(vendorId: string): Promise<any> {
+        const response = await axios.get(`${this.baseUrl}/easy-split/vendors/${vendorId}`, {
+            headers: {
+                'x-client-id': this.appId,
+                'x-client-secret': this.secretKey,
+                'x-api-version': '2023-08-01',
+            },
+        });
+        return response.data;
+    }
+
+    /**
+     * Verify Webhook Signature
+     */
+    verifySignature(signature: string, rawBody: string): boolean {
+        // Cashfree signature is base64 encoded HMAC-SHA256 of the raw body
+        const computedSignature = crypto
+            .createHmac('sha256', this.secretKey)
+            .update(rawBody)
+            .digest('base64');
+
+        return computedSignature === signature;
+    }
+
+    /**
+     * Create Refund
+     */
+    async createRefund(orderId: string, amount: number, refundId: string): Promise<any> {
+        const response = await axios.post(`${this.baseUrl}/orders/${orderId}/refunds`, {
+            refund_amount: amount,
+            refund_id: refundId,
+        }, {
+            headers: {
+                'x-api-version': '2023-08-01',
+                'x-client-id': this.appId,
+                'x-client-secret': this.secretKey,
+            }
         });
         return response.data;
     }

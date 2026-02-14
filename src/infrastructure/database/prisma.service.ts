@@ -1,14 +1,13 @@
 /**
- * Prisma Service — replaces old config/database.js (MongoDB → PostgreSQL)
- *
- * Old: mongoose.connect() with pool settings
- * New: Prisma Client with lifecycle hooks
+ * Prisma Service
  */
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+    private readonly logger = new Logger(PrismaService.name);
+
     constructor() {
         super({
             log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
@@ -17,7 +16,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     async onModuleInit() {
         await this.$connect();
-        console.log('✅ PostgreSQL Connected (Prisma)');
+        this.logger.log('✅ PostgreSQL Connected');
     }
 
     async onModuleDestroy() {

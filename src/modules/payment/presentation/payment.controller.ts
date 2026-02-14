@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { PaymentService } from '../application/payment.service';
 import { UserAuthGuard } from '../../../shared/guards/user-auth.guard';
 import { VendorAuthGuard } from '../../../shared/guards/vendor-auth.guard';
@@ -28,10 +28,27 @@ export class PaymentController {
         return this.paymentService.verifyPayment(body.orderId);
     }
 
-    // Webhook (No Guard)
+    // Webhook (No Guard — Cashfree calls this)
     @Post('webhook')
     async handleWebhook(@Req() req: any) {
-        // Implementation TODO
-        return { status: 'OK' };
+        // req.rawBody is available because we set { rawBody: true } in main.ts
+        const rawBody = req.rawBody?.toString();
+        const signature = req.headers['x-webhook-signature'];
+        return this.paymentService.handleWebhook(req.body, rawBody, signature);
+    }
+
+    // Refund Order (Vendor/Admin)
+    @Post('refund/:orderId')
+    @UseGuards(VendorAuthGuard)
+    async refundOrder(@Param('orderId') orderId: string, @Body() body: any) {
+        const { amount, reason } = body;
+        return this.paymentService.initiateRefund(orderId, amount, reason);
+    }
+
+    // Get Vendor Onboarding Status
+    @Get('vendor-status/:shopId')
+    @UseGuards(VendorAuthGuard)
+    async getVendorStatus(@Param('shopId') shopId: string) {
+        return this.paymentService.getVendorStatus(shopId);
     }
 }

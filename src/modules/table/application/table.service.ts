@@ -100,6 +100,10 @@ export class TableService {
         return { session, orders: [] };
     }
 
+    async getClosedSessions(shopId: string, page = 1, limit = 20) {
+        return this.repo.findClosedSessionsByShopIdPaginated(shopId, page, limit);
+    }
+
     async changeTableSession(shopId: string, vendor: any, body: { sessionId: string; newTableId: string }) {
         await this.shopService.checkOwnership(shopId, vendor);
         const isOccupied = await this.repo.findActiveSessionByTable(body.newTableId);

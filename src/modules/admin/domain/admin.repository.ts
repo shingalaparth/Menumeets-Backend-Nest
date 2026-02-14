@@ -1,4 +1,4 @@
-import { Shop, Vendor, AdminBroadcast, FoodCourt } from '@prisma/client';
+import { Shop, Vendor, AdminBroadcast, FoodCourt, Order, User, SystemConfig } from '@prisma/client';
 
 export interface AdminRepository {
     // Stats
@@ -15,6 +15,7 @@ export interface AdminRepository {
     getAllVendors(skip?: number, take?: number): Promise<Vendor[]>;
     findVendorById(id: string): Promise<Vendor | null>;
     updateVendor(id: string, data: any): Promise<Vendor>;
+    deleteVendor(id: string): Promise<void>;
     countVendors(): Promise<number>;
 
     // Broadcasts
@@ -23,8 +24,25 @@ export interface AdminRepository {
 
     // Food Courts
     getAllFoodCourts(): Promise<FoodCourt[]>;
-    // getRemovalRequests(): Promise<FoodCourtApplication[]>;
-    // resolveRemovalRequest(id: string, status: string): Promise<FoodCourtApplication>;
+
+    // ── Parity additions ──
+
+    // Orders
+    getAllOrders(skip: number, take: number, filters?: any): Promise<{ orders: Order[]; total: number }>;
+    findOrderById(id: string): Promise<Order | null>;
+    updateOrderStatus(id: string, status: string): Promise<Order>;
+
+    // Users
+    getAllUsers(skip: number, take: number): Promise<{ users: User[]; total: number }>;
+    findUserById(id: string): Promise<User | null>;
+
+    // System Config
+    getSystemConfigs(): Promise<SystemConfig[]>;
+    upsertSystemConfig(key: string, value: any, description?: string): Promise<SystemConfig>;
+
+    // Reports
+    getRevenueReport(startDate: Date, endDate: Date): Promise<any>;
+    getTopSellingItems(limit: number, startDate?: Date, endDate?: Date): Promise<any[]>;
 }
 
 export const ADMIN_REPOSITORY = 'ADMIN_REPOSITORY';

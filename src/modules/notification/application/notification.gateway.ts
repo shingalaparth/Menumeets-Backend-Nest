@@ -5,6 +5,7 @@ import {
     OnGatewayConnection,
     OnGatewayDisconnect,
     ConnectedSocket,
+    MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Injectable, Logger } from '@nestjs/common';
@@ -36,7 +37,7 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
             const secret = this.configService.get<string>('jwt.secret', '');
             const decoded = verifyJWT(token, secret);
-            const userId = (decoded.sub || decoded.id) as string; // Support both User and Vendor tokens
+            const userId = (decoded.sub || decoded.id) as string;
 
             if (!userId) {
                 client.disconnect();
@@ -52,6 +53,9 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
             // Join a room named after the userId for easier broadcasting
             client.join(userId);
 
+            // Store userId on the socket for later use
+            (client as any).userId = userId;
+
         } catch (e: any) {
             this.logger.error(`Connection failed: ${e.message}`);
             client.disconnect();
@@ -60,14 +64,53 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
     handleDisconnect(client: Socket) {
         this.logger.log(`Client disconnected: ${client.id}`);
-        // Cleanup logic would go here (remove from Map)
-        // For brevity/performance, maybe just rely on rooms which clean themselves up on disconnect
+        const userId = (client as any).userId;
+        if (userId) {
+            const sockets = this.userSockets.get(userId) || [];
+            const filtered = sockets.filter(s => s !== client.id);
+            if (filtered.length > 0) {
+                this.userSockets.set(userId, filtered);
+            } else {
+                this.userSockets.delete(userId);
+            }
+        }
     }
 
-    // Public method to send notifications
+    // ── Shop Room Management (Parity with old io.to(`shop-${shopId}`)) ──
+
+    @SubscribeMessage('joinShopRoom')
+    handleJoinShop(@ConnectedSocket() client: Socket, @MessageBody() data: { shopId: string }) {
+        if (!data?.shopId) return;
+        const room = `shop-${data.shopId}`;
+        client.join(room);
+        this.logger.log(`Client ${client.id} joined ${room}`);
+        return { event: 'joinedShopRoom', data: { shopId: data.shopId } };
+    }
+
+    @SubscribeMessage('leaveShopRoom')
+    handleLeaveShop(@ConnectedSocket() client: Socket, @MessageBody() data: { shopId: string }) {
+        if (!data?.shopId) return;
+        const room = `shop-${data.shopId}`;
+        client.leave(room);
+        this.logger.log(`Client ${client.id} left ${room}`);
+        return { event: 'leftShopRoom', data: { shopId: data.shopId } };
+    }
+
+    // ── Public Broadcasting Methods ──
+
+    /** Send to a specific user by userId */
     sendToUser(userId: string, event: string, payload: any) {
-        // Broadcast to the user's room
         this.server.to(userId).emit(event, payload);
+    }
+
+    /** Broadcast to all clients in a shop room — parity with io.to(`shop-${shopId}`).emit(...) */
+    emitToShop(shopId: string, event: string, payload: any) {
+        this.server.to(`shop-${shopId}`).emit(event, payload);
+    }
+
+    /** Broadcast to all connected clients */
+    broadcast(event: string, payload: any) {
+        this.server.emit(event, payload);
     }
 
     private extractToken(client: Socket): string | null {

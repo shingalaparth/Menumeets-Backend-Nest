@@ -74,4 +74,20 @@ export class TablePrismaRepository implements TableRepository {
     async updateSession(id: string, data: Partial<TableSessionEntity>): Promise<TableSessionEntity> {
         return this.prisma.tableSession.update({ where: { id }, data: data as any }) as unknown as TableSessionEntity;
     }
+
+    async findClosedSessionsByShopIdPaginated(shopId: string, page: number, limit: number): Promise<{ sessions: TableSessionEntity[]; total: number }> {
+        const skip = (page - 1) * limit;
+        const [sessions, total] = await Promise.all([
+            this.prisma.tableSession.findMany({
+                where: { shopId, status: 'CLOSED' },
+                orderBy: { closedAt: 'desc' },
+                skip,
+                take: limit,
+                include: { table: true }
+            }),
+            this.prisma.tableSession.count({ where: { shopId, status: 'CLOSED' } })
+        ]);
+
+        return { sessions: sessions as unknown as TableSessionEntity[], total };
+    }
 }
